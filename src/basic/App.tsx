@@ -7,7 +7,7 @@ import { calculateItemTotal, calculateCartTotal } from './entities/cart';
 
 import { useLocalStorage, useNotification, useDebounce } from './shared/hooks';
 
-import { NotificationToast, SearchInput, Button } from './shared/components';
+import { NotificationToast, SearchInput, Button } from './shared/ui';
 
 const App = () => {
   // ============================================================================
