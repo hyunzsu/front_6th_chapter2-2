@@ -5,55 +5,25 @@ import { ProductWithUI, initialProducts } from './entities/product';
 import { initialCoupons } from './entities/coupon';
 import { calculateItemTotal, calculateCartTotal } from './entities/cart';
 
-interface Notification {
-  id: string;
-  message: string;
-  type: 'error' | 'success' | 'warning';
-}
+import { useLocalStorage, useNotification, useDebounce } from './shared/hooks';
 
 const App = () => {
   // ============================================================================
   // 상태 관리 - localStorage와 연동된 데이터 상태들
   // ============================================================================
 
-  // 상품 목록 상태 (localStorage에서 복원)
-  const [products, setProducts] = useState<ProductWithUI[]>(() => {
-    const saved = localStorage.getItem('products');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return initialProducts;
-      }
-    }
-    return initialProducts;
-  });
+  // localStorage와 연동된 데이터 상태들
+  const [products, setProducts] = useLocalStorage('products', initialProducts);
+  const [cart, setCart] = useLocalStorage<CartItem[]>('cart', []);
+  const [coupons, setCoupons] = useLocalStorage('coupons', initialCoupons);
 
-  // 장바구니 상태 (localStorage에서 복원)
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('cart');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+  // 알림 시스템
+  const { notifications, addNotification, removeNotification } =
+    useNotification();
 
-  // 쿠폰 목록 상태 (localStorage에서 복원)
-  const [coupons, setCoupons] = useState<Coupon[]>(() => {
-    const saved = localStorage.getItem('coupons');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return initialCoupons;
-      }
-    }
-    return initialCoupons;
-  });
+  // 검색 기능
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // ============================================================================
   // UI 상태 관리 - 화면 표시 및 사용자 인터랙션 관련 상태들
@@ -61,14 +31,11 @@ const App = () => {
 
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null); // 선택된 쿠폰
   const [isAdmin, setIsAdmin] = useState(false); // 관리자 모드 여부
-  const [notifications, setNotifications] = useState<Notification[]>([]); // 알림 메시지들
   const [showCouponForm, setShowCouponForm] = useState(false); // 쿠폰 폼 표시 여부
   const [activeTab, setActiveTab] = useState<'products' | 'coupons'>(
     'products'
   ); // 관리자 탭
   const [showProductForm, setShowProductForm] = useState(false); // 상품 폼 표시 여부
-  const [searchTerm, setSearchTerm] = useState(''); // 검색어
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(''); // 디바운스된 검색어
 
   // ============================================================================
   // 관리자 폼 상태 - 상품/쿠폰 편집을 위한 폼 데이터
@@ -114,12 +81,12 @@ const App = () => {
   };
 
   // 장바구니 전체 금액 계산 (쿠폰 할인 포함) - entities/cart 함수 사용
-  const calculateCartTotalWithCoupon = (): {
+  const calculateCartTotalWithCoupon = useCallback((): {
     totalBeforeDiscount: number;
     totalAfterDiscount: number;
   } => {
     return calculateCartTotal(cart, selectedCoupon);
-  };
+  }, [cart, selectedCoupon]);
 
   // 남은 재고 계산 (전체 재고 - 장바구니 수량)
   const getRemainingStock = (product: Product): number => {
@@ -128,23 +95,6 @@ const App = () => {
 
     return remaining;
   };
-
-  // ============================================================================
-  // 알림 시스템 - 사용자에게 피드백 제공
-  // ============================================================================
-
-  // 알림 추가 함수 (3초 후 자동 제거)
-  const addNotification = useCallback(
-    (message: string, type: 'error' | 'success' | 'warning' = 'success') => {
-      const id = Date.now().toString();
-      setNotifications((prev) => [...prev, { id, message, type }]);
-
-      setTimeout(() => {
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-      }, 3000);
-    },
-    []
-  );
 
   // ============================================================================
   // 파생 상태 - 다른 상태로부터 계산되는 값들
@@ -157,37 +107,6 @@ const App = () => {
     const count = cart.reduce((sum, item) => sum + item.quantity, 0);
     setTotalItemCount(count);
   }, [cart]);
-
-  // ============================================================================
-  // localStorage 동기화 Effects - 상태 변경 시 localStorage에 저장
-  // ============================================================================
-
-  useEffect(() => {
-    localStorage.setItem('products', JSON.stringify(products));
-  }, [products]);
-
-  useEffect(() => {
-    localStorage.setItem('coupons', JSON.stringify(coupons));
-  }, [coupons]);
-
-  useEffect(() => {
-    if (cart.length > 0) {
-      localStorage.setItem('cart', JSON.stringify(cart));
-    } else {
-      localStorage.removeItem('cart');
-    }
-  }, [cart]);
-
-  // ============================================================================
-  // 검색 기능 - 디바운스를 통한 성능 최적화
-  // ============================================================================
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
   // ============================================================================
   // 장바구니 관련 비즈니스 로직
@@ -471,11 +390,7 @@ const App = () => {
             >
               <span className='mr-2'>{notif.message}</span>
               <button
-                onClick={() =>
-                  setNotifications((prev) =>
-                    prev.filter((n) => n.id !== notif.id)
-                  )
-                }
+                onClick={() => removeNotification(notif.id)}
                 className='text-white hover:text-gray-200'
               >
                 <svg
