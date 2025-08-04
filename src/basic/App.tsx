@@ -7,6 +7,8 @@ import { calculateItemTotal, calculateCartTotal } from './entities/cart';
 
 import { useLocalStorage, useNotification, useDebounce } from './shared/hooks';
 
+import { NotificationToast, SearchInput, Button } from './shared/components';
+
 const App = () => {
   // ============================================================================
   // 상태 관리 - localStorage와 연동된 데이터 상태들
@@ -36,13 +38,10 @@ const App = () => {
     'products'
   ); // 관리자 탭
   const [showProductForm, setShowProductForm] = useState(false); // 상품 폼 표시 여부
-
   // ============================================================================
   // 관리자 폼 상태 - 상품/쿠폰 편집을 위한 폼 데이터
   // ============================================================================
-
   const [editingProduct, setEditingProduct] = useState<string | null>(null); // 편집 중인 상품 ID
-
   // 상품 폼 데이터
   const [productForm, setProductForm] = useState({
     name: '',
@@ -374,43 +373,11 @@ const App = () => {
 
   return (
     <div className='min-h-screen bg-gray-50'>
-      {/* 알림 시스템 - 우상단 고정 위치 */}
-      {notifications.length > 0 && (
-        <div className='fixed top-20 right-4 z-50 space-y-2 max-w-sm'>
-          {notifications.map((notif) => (
-            <div
-              key={notif.id}
-              className={`p-4 rounded-md shadow-md text-white flex justify-between items-center ${
-                notif.type === 'error'
-                  ? 'bg-red-600'
-                  : notif.type === 'warning'
-                  ? 'bg-yellow-600'
-                  : 'bg-green-600'
-              }`}
-            >
-              <span className='mr-2'>{notif.message}</span>
-              <button
-                onClick={() => removeNotification(notif.id)}
-                className='text-white hover:text-gray-200'
-              >
-                <svg
-                  className='w-4 h-4'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M6 18L18 6M6 6l12 12'
-                  />
-                </svg>
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* 알림 시스템 */}
+      <NotificationToast
+        notifications={notifications}
+        onRemove={removeNotification}
+      />
 
       {/* 헤더 - 검색바, 관리자 모드 토글, 장바구니 아이콘 */}
       <header className='bg-white shadow-sm sticky top-0 z-40 border-b'>
@@ -418,30 +385,24 @@ const App = () => {
           <div className='flex justify-between items-center h-16'>
             <div className='flex items-center flex-1'>
               <h1 className='text-xl font-semibold text-gray-800'>SHOP</h1>
-              {/* 검색창 - 안티패턴: 검색 로직이 컴포넌트에 직접 포함 */}
+              {/* 검색창 */}
               {!isAdmin && (
-                <div className='ml-8 flex-1 max-w-md'>
-                  <input
-                    type='text'
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder='상품 검색...'
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500'
-                  />
-                </div>
+                <SearchInput
+                  value={searchTerm}
+                  onChange={setSearchTerm}
+                  placeholder='상품 검색...'
+                  className='ml-8 flex-1 max-w-md'
+                />
               )}
             </div>
             <nav className='flex items-center space-x-4'>
-              <button
+              <Button
                 onClick={() => setIsAdmin(!isAdmin)}
-                className={`px-3 py-1.5 text-sm rounded transition-colors ${
-                  isAdmin
-                    ? 'bg-gray-800 text-white'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                variant={isAdmin ? 'primary' : 'ghost'}
+                size='sm'
               >
                 {isAdmin ? '쇼핑몰로 돌아가기' : '관리자 페이지로'}
-              </button>
+              </Button>
               {!isAdmin && (
                 <div className='relative'>
                   <svg
@@ -519,7 +480,7 @@ const App = () => {
                 <div className='p-6 border-b border-gray-200'>
                   <div className='flex justify-between items-center'>
                     <h2 className='text-lg font-semibold'>상품 목록</h2>
-                    <button
+                    <Button
                       onClick={() => {
                         setEditingProduct('new');
                         setProductForm({
@@ -531,10 +492,11 @@ const App = () => {
                         });
                         setShowProductForm(true);
                       }}
-                      className='px-4 py-2 bg-gray-900 text-white text-sm rounded-md hover:bg-gray-800'
+                      variant='primary'
+                      size='md'
                     >
                       새 상품 추가
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -587,18 +549,19 @@ const App = () => {
                               {product.description || '-'}
                             </td>
                             <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
-                              <button
+                              <Button
                                 onClick={() => startEditProduct(product)}
-                                className='text-indigo-600 hover:text-indigo-900 mr-3'
+                                variant='link'
+                                className='mr-3'
                               >
                                 수정
-                              </button>
-                              <button
+                              </Button>
+                              <Button
                                 onClick={() => deleteProduct(product.id)}
-                                className='text-red-600 hover:text-red-900'
+                                variant='danger'
                               >
                                 삭제
-                              </button>
+                              </Button>
                             </td>
                           </tr>
                         )
@@ -778,7 +741,7 @@ const App = () => {
                                 placeholder='%'
                               />
                               <span className='text-sm'>% 할인</span>
-                              <button
+                              <Button
                                 type='button'
                                 onClick={() => {
                                   const newDiscounts =
@@ -790,7 +753,8 @@ const App = () => {
                                     discounts: newDiscounts,
                                   });
                                 }}
-                                className='text-red-600 hover:text-red-800'
+                                variant='danger'
+                                size='sm'
                               >
                                 <svg
                                   className='w-4 h-4'
@@ -805,10 +769,10 @@ const App = () => {
                                     d='M6 18L18 6M6 6l12 12'
                                   />
                                 </svg>
-                              </button>
+                              </Button>
                             </div>
                           ))}
-                          <button
+                          <Button
                             type='button'
                             onClick={() => {
                               setProductForm({
@@ -819,15 +783,16 @@ const App = () => {
                                 ],
                               });
                             }}
-                            className='text-sm text-indigo-600 hover:text-indigo-800'
+                            variant='link'
+                            size='md'
                           >
                             + 할인 추가
-                          </button>
+                          </Button>
                         </div>
                       </div>
 
                       <div className='flex justify-end gap-3'>
-                        <button
+                        <Button
                           type='button'
                           onClick={() => {
                             setEditingProduct(null);
@@ -840,16 +805,14 @@ const App = () => {
                             });
                             setShowProductForm(false);
                           }}
-                          className='px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50'
+                          variant='ghost'
+                          size='md'
                         >
                           취소
-                        </button>
-                        <button
-                          type='submit'
-                          className='px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700'
-                        >
+                        </Button>
+                        <Button type='submit' variant='secondary' size='md'>
                           {editingProduct === 'new' ? '추가' : '수정'}
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   </div>
@@ -886,9 +849,9 @@ const App = () => {
                               </span>
                             </div>
                           </div>
-                          <button
+                          <Button
                             onClick={() => deleteCoupon(coupon.code)}
-                            className='text-gray-400 hover:text-red-600 transition-colors'
+                            variant='icon'
                           >
                             <svg
                               className='w-5 h-5'
@@ -903,15 +866,16 @@ const App = () => {
                                 d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
                               />
                             </svg>
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     ))}
 
                     <div className='border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center hover:border-gray-400 transition-colors'>
-                      <button
+                      <Button
                         onClick={() => setShowCouponForm(!showCouponForm)}
-                        className='text-gray-400 hover:text-gray-600 flex flex-col items-center'
+                        variant='icon'
+                        className='flex flex-col items-center'
                       >
                         <svg
                           className='w-8 h-8'
@@ -927,7 +891,7 @@ const App = () => {
                           />
                         </svg>
                         <p className='mt-2 text-sm font-medium'>새 쿠폰 추가</p>
-                      </button>
+                      </Button>
                     </div>
                   </div>
 
@@ -1065,19 +1029,17 @@ const App = () => {
                           </div>
                         </div>
                         <div className='flex justify-end gap-3'>
-                          <button
+                          <Button
                             type='button'
                             onClick={() => setShowCouponForm(false)}
-                            className='px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50'
+                            variant='ghost'
+                            size='md'
                           >
                             취소
-                          </button>
-                          <button
-                            type='submit'
-                            className='px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700'
-                          >
+                          </Button>
+                          <Button type='submit' variant='secondary' size='md'>
                             쿠폰 생성
-                          </button>
+                          </Button>
                         </div>
                       </form>
                     </div>
@@ -1191,17 +1153,15 @@ const App = () => {
                             </div>
 
                             {/* 장바구니 버튼 */}
-                            <button
+                            <Button
                               onClick={() => addToCart(product)}
                               disabled={remainingStock <= 0}
-                              className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
-                                remainingStock <= 0
-                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                  : 'bg-gray-900 text-white hover:bg-gray-800'
-                              }`}
+                              variant='primary'
+                              className='w-full'
+                              size='md'
                             >
                               {remainingStock <= 0 ? '품절' : '장바구니 담기'}
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       );
@@ -1271,9 +1231,10 @@ const App = () => {
                               <h4 className='text-sm font-medium text-gray-900 flex-1'>
                                 {item.product.name}
                               </h4>
-                              <button
+                              <Button
                                 onClick={() => removeFromCart(item.product.id)}
-                                className='text-gray-400 hover:text-red-500 ml-2'
+                                variant='icon'
+                                className='ml-2'
                               >
                                 <svg
                                   className='w-4 h-4'
@@ -1288,7 +1249,7 @@ const App = () => {
                                     d='M6 18L18 6M6 6l12 12'
                                   />
                                 </svg>
-                              </button>
+                              </Button>
                             </div>
                             <div className='flex items-center justify-between'>
                               <div className='flex items-center'>
@@ -1344,9 +1305,9 @@ const App = () => {
                         <h3 className='text-sm font-semibold text-gray-700'>
                           쿠폰 할인
                         </h3>
-                        <button className='text-xs text-blue-600 hover:underline'>
+                        <Button variant='link' size='sm'>
                           쿠폰 등록
-                        </button>
+                        </Button>
                       </div>
                       {coupons.length > 0 && (
                         <select
@@ -1407,12 +1368,14 @@ const App = () => {
                         </div>
                       </div>
 
-                      <button
+                      <Button
                         onClick={completeOrder}
-                        className='w-full mt-4 py-3 bg-yellow-400 text-gray-900 rounded-md font-medium hover:bg-yellow-500 transition-colors'
+                        variant='primary'
+                        size='lg'
+                        className='w-full mt-4 bg-yellow-400 text-gray-900 hover:bg-yellow-500'
                       >
                         {totals.totalAfterDiscount.toLocaleString()}원 결제하기
-                      </button>
+                      </Button>
 
                       <div className='mt-3 text-xs text-gray-500 text-center'>
                         <p>* 실제 결제는 이루어지지 않습니다</p>
