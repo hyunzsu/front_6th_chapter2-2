@@ -5,9 +5,13 @@ import { ProductWithUI, initialProducts } from './entities/product';
 import { initialCoupons } from './entities/coupon';
 import { calculateItemTotal, calculateCartTotal } from './entities/cart';
 
-import { useLocalStorage, useNotification, useDebounce } from './shared/hooks';
-
+import { useLocalStorage, useNotification } from './shared/hooks';
 import { NotificationToast, SearchInput, Button } from './shared/ui';
+
+import { useProductSearch } from './features/products/list/hooks';
+import { useProducts } from './features/products/management/hooks';
+import { ProductManagement } from './features/products/management/ui';
+import { ProductList } from './features/products/list/ui';
 
 const App = () => {
   // ============================================================================
@@ -23,35 +27,30 @@ const App = () => {
   const { notifications, addNotification, removeNotification } =
     useNotification();
 
-  // 검색 기능
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const { searchTerm, setSearchTerm, filteredProducts } =
+    useProductSearch(products);
+
+  const { addProduct, updateProduct, deleteProduct } = useProducts({
+    products,
+    setProducts,
+    addNotification,
+  });
 
   // ============================================================================
   // UI 상태 관리 - 화면 표시 및 사용자 인터랙션 관련 상태들
   // ============================================================================
 
-  const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null); // 선택된 쿠폰
-  const [isAdmin, setIsAdmin] = useState(false); // 관리자 모드 여부
-  const [showCouponForm, setShowCouponForm] = useState(false); // 쿠폰 폼 표시 여부
+  const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showCouponForm, setShowCouponForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'coupons'>(
     'products'
-  ); // 관리자 탭
-  const [showProductForm, setShowProductForm] = useState(false); // 상품 폼 표시 여부
-  // ============================================================================
-  // 관리자 폼 상태 - 상품/쿠폰 편집을 위한 폼 데이터
-  // ============================================================================
-  const [editingProduct, setEditingProduct] = useState<string | null>(null); // 편집 중인 상품 ID
-  // 상품 폼 데이터
-  const [productForm, setProductForm] = useState({
-    name: '',
-    price: 0,
-    stock: 0,
-    description: '',
-    discounts: [] as Array<{ quantity: number; rate: number }>,
-  });
+  );
 
-  // 쿠폰 폼 데이터
+  // ============================================================================
+  // 관리자 폼 상태 - 쿠폰 편집을 위한 폼 데이터만 남음 (상품 폼은 ProductManagement에서 관리)
+  // ============================================================================
+
   const [couponForm, setCouponForm] = useState({
     name: '',
     code: '',
@@ -91,7 +90,6 @@ const App = () => {
   const getRemainingStock = (product: Product): number => {
     const cartItem = cart.find((item) => item.product.id === product.id);
     const remaining = product.stock - (cartItem?.quantity || 0);
-
     return remaining;
   };
 
@@ -99,7 +97,7 @@ const App = () => {
   // 파생 상태 - 다른 상태로부터 계산되는 값들
   // ============================================================================
 
-  const [totalItemCount, setTotalItemCount] = useState(0); // 장바구니 총 아이템 수
+  const [totalItemCount, setTotalItemCount] = useState(0);
 
   // 장바구니 아이템 수 업데이트
   useEffect(() => {
@@ -195,7 +193,6 @@ const App = () => {
     (coupon: Coupon) => {
       const currentTotal = calculateCartTotalWithCoupon().totalAfterDiscount;
 
-      // 퍼센트 쿠폰 최소 주문 금액 검증
       if (currentTotal < 10000 && coupon.discountType === 'percentage') {
         addNotification(
           'percentage 쿠폰은 10,000원 이상 구매 시 사용 가능합니다.',
@@ -226,46 +223,7 @@ const App = () => {
   }, [addNotification]);
 
   // ============================================================================
-  // 관리자 - 상품 관리 로직
-  // ============================================================================
-
-  // 새 상품 추가
-  const addProduct = useCallback(
-    (newProduct: Omit<ProductWithUI, 'id'>) => {
-      const product: ProductWithUI = {
-        ...newProduct,
-        id: `p${Date.now()}`,
-      };
-      setProducts((prev) => [...prev, product]);
-      addNotification('상품이 추가되었습니다.', 'success');
-    },
-    [addNotification]
-  );
-
-  // 상품 정보 업데이트
-  const updateProduct = useCallback(
-    (productId: string, updates: Partial<ProductWithUI>) => {
-      setProducts((prev) =>
-        prev.map((product) =>
-          product.id === productId ? { ...product, ...updates } : product
-        )
-      );
-      addNotification('상품이 수정되었습니다.', 'success');
-    },
-    [addNotification]
-  );
-
-  // 상품 삭제
-  const deleteProduct = useCallback(
-    (productId: string) => {
-      setProducts((prev) => prev.filter((p) => p.id !== productId));
-      addNotification('상품이 삭제되었습니다.', 'success');
-    },
-    [addNotification]
-  );
-
-  // ============================================================================
-  // 관리자 - 쿠폰 관리 로직
+  // 관리자 - 쿠폰 관리 로직 (상품 관리는 features/products로 이동)
   // ============================================================================
 
   // 새 쿠폰 추가
@@ -295,31 +253,8 @@ const App = () => {
   );
 
   // ============================================================================
-  // 폼 제출 핸들러들 - 관리자 페이지 폼 처리
+  // 폼 제출 핸들러들 - 쿠폰 폼만 남음 (상품 폼은 ProductManagement에서 관리)
   // ============================================================================
-
-  // 상품 폼 제출
-  const handleProductSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingProduct && editingProduct !== 'new') {
-      updateProduct(editingProduct, productForm);
-      setEditingProduct(null);
-    } else {
-      addProduct({
-        ...productForm,
-        discounts: productForm.discounts,
-      });
-    }
-    setProductForm({
-      name: '',
-      price: 0,
-      stock: 0,
-      description: '',
-      discounts: [],
-    });
-    setEditingProduct(null);
-    setShowProductForm(false);
-  };
 
   // 쿠폰 폼 제출
   const handleCouponSubmit = (e: React.FormEvent) => {
@@ -334,41 +269,14 @@ const App = () => {
     setShowCouponForm(false);
   };
 
-  // 상품 편집 시작
-  const startEditProduct = (product: ProductWithUI) => {
-    setEditingProduct(product.id);
-    setProductForm({
-      name: product.name,
-      price: product.price,
-      stock: product.stock,
-      description: product.description || '',
-      discounts: product.discounts || [],
-    });
-    setShowProductForm(true);
-  };
-
   // ============================================================================
   // 계산된 값들 - 렌더링에 필요한 파생 데이터
   // ============================================================================
 
-  const totals = calculateCartTotalWithCoupon(); // 장바구니 총액 계산 결과
-
-  // 검색 필터링된 상품 목록
-  const filteredProducts = debouncedSearchTerm
-    ? products.filter(
-        (product) =>
-          product.name
-            .toLowerCase()
-            .includes(debouncedSearchTerm.toLowerCase()) ||
-          (product.description &&
-            product.description
-              .toLowerCase()
-              .includes(debouncedSearchTerm.toLowerCase()))
-      )
-    : products;
+  const totals = calculateCartTotalWithCoupon();
 
   // ============================================================================
-  // 거대한 JSX 렌더링 - 모든 UI 컴포넌트가 인라인으로 작성됨
+  // 거대한 JSX 렌더링 - ProductList, ProductManagement 컴포넌트로 교체
   // ============================================================================
 
   return (
@@ -379,7 +287,7 @@ const App = () => {
         onRemove={removeNotification}
       />
 
-      {/* 헤더 - 검색바, 관리자 모드 토글, 장바구니 아이콘 */}
+      {/* 헤더 */}
       <header className='bg-white shadow-sm sticky top-0 z-40 border-b'>
         <div className='max-w-7xl mx-auto px-4'>
           <div className='flex justify-between items-center h-16'>
@@ -430,11 +338,11 @@ const App = () => {
         </div>
       </header>
 
-      {/* 메인 컨텐츠 - 관리자 모드와 쇼핑몰 모드 조건부 렌더링 */}
+      {/* 메인 컨텐츠 */}
       <main className='max-w-7xl mx-auto px-4 py-8'>
         {isAdmin ? (
           // ============================================================================
-          // 관리자 페이지 전체 UI (상품 관리 + 쿠폰 관리)
+          // 관리자 페이지
           // ============================================================================
           <div className='max-w-6xl mx-auto'>
             <div className='mb-8'>
@@ -473,355 +381,16 @@ const App = () => {
             </div>
 
             {activeTab === 'products' ? (
-              // ============================================================================
-              // 상품 관리 탭 - 상품 목록 테이블 + 상품 추가/편집 폼
-              // ============================================================================
-              <section className='bg-white rounded-lg border border-gray-200'>
-                <div className='p-6 border-b border-gray-200'>
-                  <div className='flex justify-between items-center'>
-                    <h2 className='text-lg font-semibold'>상품 목록</h2>
-                    <Button
-                      onClick={() => {
-                        setEditingProduct('new');
-                        setProductForm({
-                          name: '',
-                          price: 0,
-                          stock: 0,
-                          description: '',
-                          discounts: [],
-                        });
-                        setShowProductForm(true);
-                      }}
-                      variant='primary'
-                      size='md'
-                    >
-                      새 상품 추가
-                    </Button>
-                  </div>
-                </div>
-
-                {/* 상품 목록 테이블 */}
-                <div className='overflow-x-auto'>
-                  <table className='w-full'>
-                    <thead className='bg-gray-50 border-b border-gray-200'>
-                      <tr>
-                        <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                          상품명
-                        </th>
-                        <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                          가격
-                        </th>
-                        <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                          재고
-                        </th>
-                        <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                          설명
-                        </th>
-                        <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                          작업
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className='bg-white divide-y divide-gray-200'>
-                      {(activeTab === 'products' ? products : products).map(
-                        (product) => (
-                          <tr key={product.id} className='hover:bg-gray-50'>
-                            <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
-                              {product.name}
-                            </td>
-                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                              {formatPrice(product.price, product.id)}
-                            </td>
-                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  product.stock > 10
-                                    ? 'bg-green-100 text-green-800'
-                                    : product.stock > 0
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}
-                              >
-                                {product.stock}개
-                              </span>
-                            </td>
-                            <td className='px-6 py-4 text-sm text-gray-500 max-w-xs truncate'>
-                              {product.description || '-'}
-                            </td>
-                            <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
-                              <Button
-                                onClick={() => startEditProduct(product)}
-                                variant='link'
-                                className='mr-3'
-                              >
-                                수정
-                              </Button>
-                              <Button
-                                onClick={() => deleteProduct(product.id)}
-                                variant='danger'
-                              >
-                                삭제
-                              </Button>
-                            </td>
-                          </tr>
-                        )
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* 상품 추가/편집 폼 */}
-                {showProductForm && (
-                  <div className='p-6 border-t border-gray-200 bg-gray-50'>
-                    <form onSubmit={handleProductSubmit} className='space-y-4'>
-                      <h3 className='text-lg font-medium text-gray-900'>
-                        {editingProduct === 'new'
-                          ? '새 상품 추가'
-                          : '상품 수정'}
-                      </h3>
-                      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                        <div>
-                          <label className='block text-sm font-medium text-gray-700 mb-1'>
-                            상품명
-                          </label>
-                          <input
-                            type='text'
-                            value={productForm.name}
-                            onChange={(e) =>
-                              setProductForm({
-                                ...productForm,
-                                name: e.target.value,
-                              })
-                            }
-                            className='w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2 border'
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className='block text-sm font-medium text-gray-700 mb-1'>
-                            설명
-                          </label>
-                          <input
-                            type='text'
-                            value={productForm.description}
-                            onChange={(e) =>
-                              setProductForm({
-                                ...productForm,
-                                description: e.target.value,
-                              })
-                            }
-                            className='w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2 border'
-                          />
-                        </div>
-                        <div>
-                          <label className='block text-sm font-medium text-gray-700 mb-1'>
-                            가격
-                          </label>
-                          <input
-                            type='text'
-                            value={
-                              productForm.price === 0 ? '' : productForm.price
-                            }
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (value === '' || /^\d+$/.test(value)) {
-                                setProductForm({
-                                  ...productForm,
-                                  price: value === '' ? 0 : parseInt(value),
-                                });
-                              }
-                            }}
-                            onBlur={(e) => {
-                              const value = e.target.value;
-                              if (value === '') {
-                                setProductForm({ ...productForm, price: 0 });
-                              } else if (parseInt(value) < 0) {
-                                addNotification(
-                                  '가격은 0보다 커야 합니다',
-                                  'error'
-                                );
-                                setProductForm({ ...productForm, price: 0 });
-                              }
-                            }}
-                            className='w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2 border'
-                            placeholder='숫자만 입력'
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className='block text-sm font-medium text-gray-700 mb-1'>
-                            재고
-                          </label>
-                          <input
-                            type='text'
-                            value={
-                              productForm.stock === 0 ? '' : productForm.stock
-                            }
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (value === '' || /^\d+$/.test(value)) {
-                                setProductForm({
-                                  ...productForm,
-                                  stock: value === '' ? 0 : parseInt(value),
-                                });
-                              }
-                            }}
-                            onBlur={(e) => {
-                              const value = e.target.value;
-                              if (value === '') {
-                                setProductForm({ ...productForm, stock: 0 });
-                              } else if (parseInt(value) < 0) {
-                                addNotification(
-                                  '재고는 0보다 커야 합니다',
-                                  'error'
-                                );
-                                setProductForm({ ...productForm, stock: 0 });
-                              } else if (parseInt(value) > 9999) {
-                                addNotification(
-                                  '재고는 9999개를 초과할 수 없습니다',
-                                  'error'
-                                );
-                                setProductForm({ ...productForm, stock: 9999 });
-                              }
-                            }}
-                            className='w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2 border'
-                            placeholder='숫자만 입력'
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      {/* 할인 정책 관리 */}
-                      <div className='mt-4'>
-                        <label className='block text-sm font-medium text-gray-700 mb-2'>
-                          할인 정책
-                        </label>
-                        <div className='space-y-2'>
-                          {productForm.discounts.map((discount, index) => (
-                            <div
-                              key={index}
-                              className='flex items-center gap-2 bg-gray-50 p-2 rounded'
-                            >
-                              <input
-                                type='number'
-                                value={discount.quantity}
-                                onChange={(e) => {
-                                  const newDiscounts = [
-                                    ...productForm.discounts,
-                                  ];
-                                  newDiscounts[index].quantity =
-                                    parseInt(e.target.value) || 0;
-                                  setProductForm({
-                                    ...productForm,
-                                    discounts: newDiscounts,
-                                  });
-                                }}
-                                className='w-20 px-2 py-1 border rounded'
-                                min='1'
-                                placeholder='수량'
-                              />
-                              <span className='text-sm'>개 이상 구매 시</span>
-                              <input
-                                type='number'
-                                value={discount.rate * 100}
-                                onChange={(e) => {
-                                  const newDiscounts = [
-                                    ...productForm.discounts,
-                                  ];
-                                  newDiscounts[index].rate =
-                                    (parseInt(e.target.value) || 0) / 100;
-                                  setProductForm({
-                                    ...productForm,
-                                    discounts: newDiscounts,
-                                  });
-                                }}
-                                className='w-16 px-2 py-1 border rounded'
-                                min='0'
-                                max='100'
-                                placeholder='%'
-                              />
-                              <span className='text-sm'>% 할인</span>
-                              <Button
-                                type='button'
-                                onClick={() => {
-                                  const newDiscounts =
-                                    productForm.discounts.filter(
-                                      (_, i) => i !== index
-                                    );
-                                  setProductForm({
-                                    ...productForm,
-                                    discounts: newDiscounts,
-                                  });
-                                }}
-                                variant='danger'
-                                size='sm'
-                              >
-                                <svg
-                                  className='w-4 h-4'
-                                  fill='none'
-                                  stroke='currentColor'
-                                  viewBox='0 0 24 24'
-                                >
-                                  <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M6 18L18 6M6 6l12 12'
-                                  />
-                                </svg>
-                              </Button>
-                            </div>
-                          ))}
-                          <Button
-                            type='button'
-                            onClick={() => {
-                              setProductForm({
-                                ...productForm,
-                                discounts: [
-                                  ...productForm.discounts,
-                                  { quantity: 10, rate: 0.1 },
-                                ],
-                              });
-                            }}
-                            variant='link'
-                            size='md'
-                          >
-                            + 할인 추가
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className='flex justify-end gap-3'>
-                        <Button
-                          type='button'
-                          onClick={() => {
-                            setEditingProduct(null);
-                            setProductForm({
-                              name: '',
-                              price: 0,
-                              stock: 0,
-                              description: '',
-                              discounts: [],
-                            });
-                            setShowProductForm(false);
-                          }}
-                          variant='ghost'
-                          size='md'
-                        >
-                          취소
-                        </Button>
-                        <Button type='submit' variant='secondary' size='md'>
-                          {editingProduct === 'new' ? '추가' : '수정'}
-                        </Button>
-                      </div>
-                    </form>
-                  </div>
-                )}
-              </section>
+              <ProductManagement
+                products={products}
+                onAddProduct={addProduct}
+                onUpdateProduct={updateProduct}
+                onDeleteProduct={deleteProduct}
+                formatPrice={formatPrice}
+                addNotification={addNotification}
+              />
             ) : (
-              // ============================================================================
-              // 쿠폰 관리 탭 - 쿠폰 카드 목록 + 쿠폰 추가 폼
-              // ============================================================================
+              // 쿠폰 관리 탭
               <section className='bg-white rounded-lg border border-gray-200'>
                 <div className='p-6 border-b border-gray-200'>
                   <h2 className='text-lg font-semibold'>쿠폰 관리</h2>
@@ -1050,7 +619,7 @@ const App = () => {
           </div>
         ) : (
           // ============================================================================
-          // 쇼핑몰 메인 페이지 - 상품 목록 + 장바구니 사이드바
+          // 쇼핑몰 메인 페이지
           // ============================================================================
           <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
             <div className='lg:col-span-3'>
@@ -1064,114 +633,19 @@ const App = () => {
                     총 {products.length}개 상품
                   </div>
                 </div>
-                {filteredProducts.length === 0 ? (
-                  <div className='text-center py-12'>
-                    <p className='text-gray-500'>
-                      "{debouncedSearchTerm}"에 대한 검색 결과가 없습니다.
-                    </p>
-                  </div>
-                ) : (
-                  <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-                    {filteredProducts.map((product) => {
-                      const remainingStock = getRemainingStock(product);
 
-                      return (
-                        // 개별 상품 카드
-                        <div
-                          key={product.id}
-                          className='bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow'
-                        >
-                          {/* 상품 이미지 영역 (placeholder) */}
-                          <div className='relative'>
-                            <div className='aspect-square bg-gray-100 flex items-center justify-center'>
-                              <svg
-                                className='w-24 h-24 text-gray-300'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                              >
-                                <path
-                                  strokeLinecap='round'
-                                  strokeLinejoin='round'
-                                  strokeWidth={1}
-                                  d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
-                                />
-                              </svg>
-                            </div>
-                            {product.isRecommended && (
-                              <span className='absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded'>
-                                BEST
-                              </span>
-                            )}
-                            {product.discounts.length > 0 && (
-                              <span className='absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded'>
-                                ~
-                                {Math.max(
-                                  ...product.discounts.map((d) => d.rate)
-                                ) * 100}
-                                %
-                              </span>
-                            )}
-                          </div>
-
-                          {/* 상품 정보 */}
-                          <div className='p-4'>
-                            <h3 className='font-medium text-gray-900 mb-1'>
-                              {product.name}
-                            </h3>
-                            {product.description && (
-                              <p className='text-sm text-gray-500 mb-2 line-clamp-2'>
-                                {product.description}
-                              </p>
-                            )}
-
-                            {/* 가격 정보 */}
-                            <div className='mb-3'>
-                              <p className='text-lg font-bold text-gray-900'>
-                                {formatPrice(product.price, product.id)}
-                              </p>
-                              {product.discounts.length > 0 && (
-                                <p className='text-xs text-gray-500'>
-                                  {product.discounts[0].quantity}개 이상 구매시
-                                  할인 {product.discounts[0].rate * 100}%
-                                </p>
-                              )}
-                            </div>
-
-                            {/* 재고 상태 */}
-                            <div className='mb-3'>
-                              {remainingStock <= 5 && remainingStock > 0 && (
-                                <p className='text-xs text-red-600 font-medium'>
-                                  품절임박! {remainingStock}개 남음
-                                </p>
-                              )}
-                              {remainingStock > 5 && (
-                                <p className='text-xs text-gray-500'>
-                                  재고 {remainingStock}개
-                                </p>
-                              )}
-                            </div>
-
-                            {/* 장바구니 버튼 */}
-                            <Button
-                              onClick={() => addToCart(product)}
-                              disabled={remainingStock <= 0}
-                              variant='primary'
-                              className='w-full'
-                              size='md'
-                            >
-                              {remainingStock <= 0 ? '품절' : '장바구니 담기'}
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                <ProductList
+                  products={filteredProducts}
+                  searchTerm={searchTerm}
+                  // cart={cart}
+                  onAddToCart={addToCart}
+                  formatPrice={formatPrice}
+                  getRemainingStock={getRemainingStock}
+                />
               </section>
             </div>
 
-            {/* 장바구니 사이드바 */}
+            {/* 장바구니 사이드바 (기존 코드 유지) */}
             <div className='lg:col-span-1'>
               <div className='sticky top-24 space-y-4'>
                 {/* 장바구니 섹션 */}
