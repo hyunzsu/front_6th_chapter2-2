@@ -3,7 +3,7 @@ import { CartItem, Coupon, Product } from '../types';
 
 import { ProductWithUI, initialProducts } from './entities/product';
 import { initialCoupons } from './entities/coupon';
-import { calculateItemTotal, calculateCartTotal } from './entities/cart';
+import { calculateCartTotal } from './entities/cart';
 
 import { useLocalStorage, useNotification } from './shared/hooks';
 import { NotificationToast, SearchInput, Button } from './shared/ui';
@@ -16,6 +16,9 @@ import { ProductList } from './features/products/list/ui';
 import { useCart } from './features/cart/hooks';
 import { CartSidebar } from './features/cart/ui';
 
+import { useCoupons } from './features/coupons/hooks';
+import { CouponManagement } from './features/coupons/ui';
+
 const App = () => {
   // ============================================================================
   // 상태 관리 - localStorage와 연동된 데이터 상태들
@@ -26,48 +29,16 @@ const App = () => {
   const [cart, setCart] = useLocalStorage<CartItem[]>('cart', []);
   const [coupons, setCoupons] = useLocalStorage('coupons', initialCoupons);
 
-  // 알림 시스템
-  const { notifications, addNotification, removeNotification } =
-    useNotification();
-
-  const { searchTerm, setSearchTerm, filteredProducts } =
-    useProductSearch(products);
-
-  const { addProduct, updateProduct, deleteProduct } = useProducts({
-    products,
-    setProducts,
-    addNotification,
-  });
-
-  const { addToCart, removeFromCart, updateQuantity, getRemainingStock } =
-    useCart({
-      cart,
-      setCart,
-      products,
-      addNotification,
-    });
-
   // ============================================================================
   // UI 상태 관리 - 화면 표시 및 사용자 인터랙션 관련 상태들
   // ============================================================================
 
+  // UI 상태 관리
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showCouponForm, setShowCouponForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'coupons'>(
     'products'
   );
-
-  // ============================================================================
-  // 관리자 폼 상태 - 쿠폰 편집을 위한 폼 데이터만 남음 (상품 폼은 ProductManagement에서 관리)
-  // ============================================================================
-
-  const [couponForm, setCouponForm] = useState({
-    name: '',
-    code: '',
-    discountType: 'amount' as 'amount' | 'percentage',
-    discountValue: 0,
-  });
 
   // ============================================================================
   // 유틸리티 함수들 - 데이터 포맷팅 및 계산 로직
@@ -97,6 +68,36 @@ const App = () => {
     return calculateCartTotal(cart, selectedCoupon);
   }, [cart, selectedCoupon]);
 
+  // 알림 시스템
+  const { notifications, addNotification, removeNotification } =
+    useNotification();
+
+  const { searchTerm, setSearchTerm, filteredProducts } =
+    useProductSearch(products);
+
+  const { addProduct, updateProduct, deleteProduct } = useProducts({
+    products,
+    setProducts,
+    addNotification,
+  });
+
+  const { addToCart, removeFromCart, updateQuantity, getRemainingStock } =
+    useCart({
+      cart,
+      setCart,
+      products,
+      addNotification,
+    });
+
+  const { addCoupon, deleteCoupon, applyCoupon } = useCoupons({
+    coupons,
+    setCoupons,
+    selectedCoupon,
+    setSelectedCoupon,
+    addNotification,
+    calculateCartTotalWithCoupon,
+  });
+
   // ============================================================================
   // 파생 상태 - 다른 상태로부터 계산되는 값들
   // ============================================================================
@@ -108,29 +109,6 @@ const App = () => {
     const count = cart.reduce((sum, item) => sum + item.quantity, 0);
     setTotalItemCount(count);
   }, [cart]);
-
-  // ============================================================================
-  // 쿠폰 관련 비즈니스 로직
-  // ============================================================================
-
-  // 쿠폰 적용
-  const applyCoupon = useCallback(
-    (coupon: Coupon) => {
-      const currentTotal = calculateCartTotalWithCoupon().totalAfterDiscount;
-
-      if (currentTotal < 10000 && coupon.discountType === 'percentage') {
-        addNotification(
-          'percentage 쿠폰은 10,000원 이상 구매 시 사용 가능합니다.',
-          'error'
-        );
-        return;
-      }
-
-      setSelectedCoupon(coupon);
-      addNotification('쿠폰이 적용되었습니다.', 'success');
-    },
-    [addNotification, calculateCartTotalWithCoupon]
-  );
 
   // ============================================================================
   // 주문 처리 로직
@@ -145,54 +123,7 @@ const App = () => {
     );
     setCart([]);
     setSelectedCoupon(null);
-  }, [addNotification]);
-
-  // ============================================================================
-  // 관리자 - 쿠폰 관리 로직 (상품 관리는 features/products로 이동)
-  // ============================================================================
-
-  // 새 쿠폰 추가
-  const addCoupon = useCallback(
-    (newCoupon: Coupon) => {
-      const existingCoupon = coupons.find((c) => c.code === newCoupon.code);
-      if (existingCoupon) {
-        addNotification('이미 존재하는 쿠폰 코드입니다.', 'error');
-        return;
-      }
-      setCoupons((prev) => [...prev, newCoupon]);
-      addNotification('쿠폰이 추가되었습니다.', 'success');
-    },
-    [coupons, addNotification]
-  );
-
-  // 쿠폰 삭제
-  const deleteCoupon = useCallback(
-    (couponCode: string) => {
-      setCoupons((prev) => prev.filter((c) => c.code !== couponCode));
-      if (selectedCoupon?.code === couponCode) {
-        setSelectedCoupon(null);
-      }
-      addNotification('쿠폰이 삭제되었습니다.', 'success');
-    },
-    [selectedCoupon, addNotification]
-  );
-
-  // ============================================================================
-  // 폼 제출 핸들러들 - 쿠폰 폼만 남음 (상품 폼은 ProductManagement에서 관리)
-  // ============================================================================
-
-  // 쿠폰 폼 제출
-  const handleCouponSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    addCoupon(couponForm);
-    setCouponForm({
-      name: '',
-      code: '',
-      discountType: 'amount',
-      discountValue: 0,
-    });
-    setShowCouponForm(false);
-  };
+  }, [addNotification, setCart]);
 
   // ============================================================================
   // 계산된 값들 - 렌더링에 필요한 파생 데이터
@@ -315,231 +246,12 @@ const App = () => {
                 addNotification={addNotification}
               />
             ) : (
-              // 쿠폰 관리 탭
-              <section className='bg-white rounded-lg border border-gray-200'>
-                <div className='p-6 border-b border-gray-200'>
-                  <h2 className='text-lg font-semibold'>쿠폰 관리</h2>
-                </div>
-                <div className='p-6'>
-                  <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-                    {coupons.map((coupon) => (
-                      <div
-                        key={coupon.code}
-                        className='relative bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200'
-                      >
-                        <div className='flex justify-between items-start'>
-                          <div className='flex-1'>
-                            <h3 className='font-semibold text-gray-900'>
-                              {coupon.name}
-                            </h3>
-                            <p className='text-sm text-gray-600 mt-1 font-mono'>
-                              {coupon.code}
-                            </p>
-                            <div className='mt-2'>
-                              <span className='inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white text-indigo-700'>
-                                {coupon.discountType === 'amount'
-                                  ? `${coupon.discountValue.toLocaleString()}원 할인`
-                                  : `${coupon.discountValue}% 할인`}
-                              </span>
-                            </div>
-                          </div>
-                          <Button
-                            onClick={() => deleteCoupon(coupon.code)}
-                            variant='icon'
-                          >
-                            <svg
-                              className='w-5 h-5'
-                              fill='none'
-                              stroke='currentColor'
-                              viewBox='0 0 24 24'
-                            >
-                              <path
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                                strokeWidth={2}
-                                d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                              />
-                            </svg>
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-
-                    <div className='border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center hover:border-gray-400 transition-colors'>
-                      <Button
-                        onClick={() => setShowCouponForm(!showCouponForm)}
-                        variant='icon'
-                        className='flex flex-col items-center'
-                      >
-                        <svg
-                          className='w-8 h-8'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={2}
-                            d='M12 4v16m8-8H4'
-                          />
-                        </svg>
-                        <p className='mt-2 text-sm font-medium'>새 쿠폰 추가</p>
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* 쿠폰 추가 폼 */}
-                  {showCouponForm && (
-                    <div className='mt-6 p-4 bg-gray-50 rounded-lg'>
-                      <form onSubmit={handleCouponSubmit} className='space-y-4'>
-                        <h3 className='text-md font-medium text-gray-900'>
-                          새 쿠폰 생성
-                        </h3>
-                        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-                          <div>
-                            <label className='block text-sm font-medium text-gray-700 mb-1'>
-                              쿠폰명
-                            </label>
-                            <input
-                              type='text'
-                              value={couponForm.name}
-                              onChange={(e) =>
-                                setCouponForm({
-                                  ...couponForm,
-                                  name: e.target.value,
-                                })
-                              }
-                              className='w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2 border text-sm'
-                              placeholder='신규 가입 쿠폰'
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className='block text-sm font-medium text-gray-700 mb-1'>
-                              쿠폰 코드
-                            </label>
-                            <input
-                              type='text'
-                              value={couponForm.code}
-                              onChange={(e) =>
-                                setCouponForm({
-                                  ...couponForm,
-                                  code: e.target.value.toUpperCase(),
-                                })
-                              }
-                              className='w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2 border text-sm font-mono'
-                              placeholder='WELCOME2024'
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className='block text-sm font-medium text-gray-700 mb-1'>
-                              할인 타입
-                            </label>
-                            <select
-                              value={couponForm.discountType}
-                              onChange={(e) =>
-                                setCouponForm({
-                                  ...couponForm,
-                                  discountType: e.target.value as
-                                    | 'amount'
-                                    | 'percentage',
-                                })
-                              }
-                              className='w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2 border text-sm'
-                            >
-                              <option value='amount'>정액 할인</option>
-                              <option value='percentage'>정률 할인</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className='block text-sm font-medium text-gray-700 mb-1'>
-                              {couponForm.discountType === 'amount'
-                                ? '할인 금액'
-                                : '할인율(%)'}
-                            </label>
-                            <input
-                              type='text'
-                              value={
-                                couponForm.discountValue === 0
-                                  ? ''
-                                  : couponForm.discountValue
-                              }
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (value === '' || /^\d+$/.test(value)) {
-                                  setCouponForm({
-                                    ...couponForm,
-                                    discountValue:
-                                      value === '' ? 0 : parseInt(value),
-                                  });
-                                }
-                              }}
-                              onBlur={(e) => {
-                                const value = parseInt(e.target.value) || 0;
-                                if (couponForm.discountType === 'percentage') {
-                                  if (value > 100) {
-                                    addNotification(
-                                      '할인율은 100%를 초과할 수 없습니다',
-                                      'error'
-                                    );
-                                    setCouponForm({
-                                      ...couponForm,
-                                      discountValue: 100,
-                                    });
-                                  } else if (value < 0) {
-                                    setCouponForm({
-                                      ...couponForm,
-                                      discountValue: 0,
-                                    });
-                                  }
-                                } else {
-                                  if (value > 100000) {
-                                    addNotification(
-                                      '할인 금액은 100,000원을 초과할 수 없습니다',
-                                      'error'
-                                    );
-                                    setCouponForm({
-                                      ...couponForm,
-                                      discountValue: 100000,
-                                    });
-                                  } else if (value < 0) {
-                                    setCouponForm({
-                                      ...couponForm,
-                                      discountValue: 0,
-                                    });
-                                  }
-                                }
-                              }}
-                              className='w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2 border text-sm'
-                              placeholder={
-                                couponForm.discountType === 'amount'
-                                  ? '5000'
-                                  : '10'
-                              }
-                              required
-                            />
-                          </div>
-                        </div>
-                        <div className='flex justify-end gap-3'>
-                          <Button
-                            type='button'
-                            onClick={() => setShowCouponForm(false)}
-                            variant='ghost'
-                            size='md'
-                          >
-                            취소
-                          </Button>
-                          <Button type='submit' variant='secondary' size='md'>
-                            쿠폰 생성
-                          </Button>
-                        </div>
-                      </form>
-                    </div>
-                  )}
-                </div>
-              </section>
+              <CouponManagement
+                coupons={coupons}
+                onAddCoupon={addCoupon}
+                onDeleteCoupon={deleteCoupon}
+                addNotification={addNotification}
+              />
             )}
           </div>
         ) : (
