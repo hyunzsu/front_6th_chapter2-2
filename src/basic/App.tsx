@@ -13,6 +13,9 @@ import { useProducts } from './features/products/management/hooks';
 import { ProductManagement } from './features/products/management/ui';
 import { ProductList } from './features/products/list/ui';
 
+import { useCart } from './features/cart/hooks';
+import { CartSidebar } from './features/cart/ui';
+
 const App = () => {
   // ============================================================================
   // 상태 관리 - localStorage와 연동된 데이터 상태들
@@ -35,6 +38,14 @@ const App = () => {
     setProducts,
     addNotification,
   });
+
+  const { addToCart, removeFromCart, updateQuantity, getRemainingStock } =
+    useCart({
+      cart,
+      setCart,
+      products,
+      addNotification,
+    });
 
   // ============================================================================
   // UI 상태 관리 - 화면 표시 및 사용자 인터랙션 관련 상태들
@@ -86,13 +97,6 @@ const App = () => {
     return calculateCartTotal(cart, selectedCoupon);
   }, [cart, selectedCoupon]);
 
-  // 남은 재고 계산 (전체 재고 - 장바구니 수량)
-  const getRemainingStock = (product: Product): number => {
-    const cartItem = cart.find((item) => item.product.id === product.id);
-    const remaining = product.stock - (cartItem?.quantity || 0);
-    return remaining;
-  };
-
   // ============================================================================
   // 파생 상태 - 다른 상태로부터 계산되는 값들
   // ============================================================================
@@ -104,85 +108,6 @@ const App = () => {
     const count = cart.reduce((sum, item) => sum + item.quantity, 0);
     setTotalItemCount(count);
   }, [cart]);
-
-  // ============================================================================
-  // 장바구니 관련 비즈니스 로직
-  // ============================================================================
-
-  // 장바구니에 상품 추가
-  const addToCart = useCallback(
-    (product: ProductWithUI) => {
-      const remainingStock = getRemainingStock(product);
-      if (remainingStock <= 0) {
-        addNotification('재고가 부족합니다!', 'error');
-        return;
-      }
-
-      setCart((prevCart) => {
-        const existingItem = prevCart.find(
-          (item) => item.product.id === product.id
-        );
-
-        if (existingItem) {
-          const newQuantity = existingItem.quantity + 1;
-
-          if (newQuantity > product.stock) {
-            addNotification(
-              `재고는 ${product.stock}개까지만 있습니다.`,
-              'error'
-            );
-            return prevCart;
-          }
-
-          return prevCart.map((item) =>
-            item.product.id === product.id
-              ? { ...item, quantity: newQuantity }
-              : item
-          );
-        }
-
-        return [...prevCart, { product, quantity: 1 }];
-      });
-
-      addNotification('장바구니에 담았습니다', 'success');
-    },
-    [cart, addNotification, getRemainingStock]
-  );
-
-  // 장바구니에서 상품 제거
-  const removeFromCart = useCallback((productId: string) => {
-    setCart((prevCart) =>
-      prevCart.filter((item) => item.product.id !== productId)
-    );
-  }, []);
-
-  // 장바구니 상품 수량 업데이트
-  const updateQuantity = useCallback(
-    (productId: string, newQuantity: number) => {
-      if (newQuantity <= 0) {
-        removeFromCart(productId);
-        return;
-      }
-
-      const product = products.find((p) => p.id === productId);
-      if (!product) return;
-
-      const maxStock = product.stock;
-      if (newQuantity > maxStock) {
-        addNotification(`재고는 ${maxStock}개까지만 있습니다.`, 'error');
-        return;
-      }
-
-      setCart((prevCart) =>
-        prevCart.map((item) =>
-          item.product.id === productId
-            ? { ...item, quantity: newQuantity }
-            : item
-        )
-      );
-    },
-    [products, removeFromCart, addNotification, getRemainingStock]
-  );
 
   // ============================================================================
   // 쿠폰 관련 비즈니스 로직
@@ -645,219 +570,19 @@ const App = () => {
               </section>
             </div>
 
-            {/* 장바구니 사이드바 (기존 코드 유지) */}
+            {/* 장바구니 사이드바 */}
             <div className='lg:col-span-1'>
-              <div className='sticky top-24 space-y-4'>
-                {/* 장바구니 섹션 */}
-                <section className='bg-white rounded-lg border border-gray-200 p-4'>
-                  <h2 className='text-lg font-semibold mb-4 flex items-center'>
-                    <svg
-                      className='w-5 h-5 mr-2'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'
-                      />
-                    </svg>
-                    장바구니
-                  </h2>
-                  {cart.length === 0 ? (
-                    <div className='text-center py-8'>
-                      <svg
-                        className='w-16 h-16 text-gray-300 mx-auto mb-4'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={1}
-                          d='M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'
-                        />
-                      </svg>
-                      <p className='text-gray-500 text-sm'>
-                        장바구니가 비어있습니다
-                      </p>
-                    </div>
-                  ) : (
-                    <div className='space-y-3'>
-                      {cart.map((item) => {
-                        const itemTotal = calculateItemTotal(item, cart);
-                        const originalPrice =
-                          item.product.price * item.quantity;
-                        const hasDiscount = itemTotal < originalPrice;
-                        const discountRate = hasDiscount
-                          ? Math.round((1 - itemTotal / originalPrice) * 100)
-                          : 0;
-
-                        return (
-                          <div
-                            key={item.product.id}
-                            className='border-b pb-3 last:border-b-0'
-                          >
-                            <div className='flex justify-between items-start mb-2'>
-                              <h4 className='text-sm font-medium text-gray-900 flex-1'>
-                                {item.product.name}
-                              </h4>
-                              <Button
-                                onClick={() => removeFromCart(item.product.id)}
-                                variant='icon'
-                                className='ml-2'
-                              >
-                                <svg
-                                  className='w-4 h-4'
-                                  fill='none'
-                                  stroke='currentColor'
-                                  viewBox='0 0 24 24'
-                                >
-                                  <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M6 18L18 6M6 6l12 12'
-                                  />
-                                </svg>
-                              </Button>
-                            </div>
-                            <div className='flex items-center justify-between'>
-                              <div className='flex items-center'>
-                                <button
-                                  onClick={() =>
-                                    updateQuantity(
-                                      item.product.id,
-                                      item.quantity - 1
-                                    )
-                                  }
-                                  className='w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100'
-                                >
-                                  <span className='text-xs'>−</span>
-                                </button>
-                                <span className='mx-3 text-sm font-medium w-8 text-center'>
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  onClick={() =>
-                                    updateQuantity(
-                                      item.product.id,
-                                      item.quantity + 1
-                                    )
-                                  }
-                                  className='w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100'
-                                >
-                                  <span className='text-xs'>+</span>
-                                </button>
-                              </div>
-                              <div className='text-right'>
-                                {hasDiscount && (
-                                  <span className='text-xs text-red-500 font-medium block'>
-                                    -{discountRate}%
-                                  </span>
-                                )}
-                                <p className='text-sm font-medium text-gray-900'>
-                                  {Math.round(itemTotal).toLocaleString()}원
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </section>
-
-                {/* 쿠폰 할인 섹션 */}
-                {cart.length > 0 && (
-                  <>
-                    <section className='bg-white rounded-lg border border-gray-200 p-4'>
-                      <div className='flex items-center justify-between mb-3'>
-                        <h3 className='text-sm font-semibold text-gray-700'>
-                          쿠폰 할인
-                        </h3>
-                        <Button variant='link' size='sm'>
-                          쿠폰 등록
-                        </Button>
-                      </div>
-                      {coupons.length > 0 && (
-                        <select
-                          className='w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500'
-                          value={selectedCoupon?.code || ''}
-                          onChange={(e) => {
-                            const coupon = coupons.find(
-                              (c) => c.code === e.target.value
-                            );
-                            if (coupon) applyCoupon(coupon);
-                            else setSelectedCoupon(null);
-                          }}
-                        >
-                          <option value=''>쿠폰 선택</option>
-                          {coupons.map((coupon) => (
-                            <option key={coupon.code} value={coupon.code}>
-                              {coupon.name} (
-                              {coupon.discountType === 'amount'
-                                ? `${coupon.discountValue.toLocaleString()}원`
-                                : `${coupon.discountValue}%`}
-                              )
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </section>
-
-                    {/* 결제 정보 섹션 */}
-                    <section className='bg-white rounded-lg border border-gray-200 p-4'>
-                      <h3 className='text-lg font-semibold mb-4'>결제 정보</h3>
-                      <div className='space-y-2 text-sm'>
-                        <div className='flex justify-between'>
-                          <span className='text-gray-600'>상품 금액</span>
-                          <span className='font-medium'>
-                            {totals.totalBeforeDiscount.toLocaleString()}원
-                          </span>
-                        </div>
-                        {totals.totalBeforeDiscount -
-                          totals.totalAfterDiscount >
-                          0 && (
-                          <div className='flex justify-between text-red-500'>
-                            <span>할인 금액</span>
-                            <span>
-                              -
-                              {(
-                                totals.totalBeforeDiscount -
-                                totals.totalAfterDiscount
-                              ).toLocaleString()}
-                              원
-                            </span>
-                          </div>
-                        )}
-                        <div className='flex justify-between py-2 border-t border-gray-200'>
-                          <span className='font-semibold'>결제 예정 금액</span>
-                          <span className='font-bold text-lg text-gray-900'>
-                            {totals.totalAfterDiscount.toLocaleString()}원
-                          </span>
-                        </div>
-                      </div>
-
-                      <Button
-                        onClick={completeOrder}
-                        variant='primary'
-                        size='lg'
-                        className='w-full mt-4 bg-yellow-400 text-gray-900 hover:bg-yellow-500'
-                      >
-                        {totals.totalAfterDiscount.toLocaleString()}원 결제하기
-                      </Button>
-
-                      <div className='mt-3 text-xs text-gray-500 text-center'>
-                        <p>* 실제 결제는 이루어지지 않습니다</p>
-                      </div>
-                    </section>
-                  </>
-                )}
-              </div>
+              <CartSidebar
+                cart={cart}
+                coupons={coupons}
+                selectedCoupon={selectedCoupon}
+                totals={totals}
+                onRemoveFromCart={removeFromCart}
+                onUpdateQuantity={updateQuantity}
+                onApplyCoupon={applyCoupon}
+                onSetSelectedCoupon={setSelectedCoupon}
+                onCompleteOrder={completeOrder}
+              />
             </div>
           </div>
         )}
