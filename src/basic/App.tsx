@@ -19,6 +19,8 @@ import { CartSidebar } from './features/cart/ui';
 import { useCoupons } from './features/coupons/hooks';
 import { CouponManagement } from './features/coupons/ui';
 
+import { useOrder } from './features/order/hooks';
+
 const App = () => {
   // ============================================================================
   // 상태 관리 - localStorage와 연동된 데이터 상태들
@@ -98,6 +100,12 @@ const App = () => {
     calculateCartTotalWithCoupon,
   });
 
+  const { completeOrder } = useOrder({
+    setCart,
+    setSelectedCoupon,
+    addNotification,
+  });
+
   // ============================================================================
   // 파생 상태 - 다른 상태로부터 계산되는 값들
   // ============================================================================
@@ -110,20 +118,6 @@ const App = () => {
     setTotalItemCount(count);
   }, [cart]);
 
-  // ============================================================================
-  // 주문 처리 로직
-  // ============================================================================
-
-  // 주문 완료 처리
-  const completeOrder = useCallback(() => {
-    const orderNumber = `ORD-${Date.now()}`;
-    addNotification(
-      `주문이 완료되었습니다. 주문번호: ${orderNumber}`,
-      'success'
-    );
-    setCart([]);
-    setSelectedCoupon(null);
-  }, [addNotification, setCart]);
 
   // ============================================================================
   // 계산된 값들 - 렌더링에 필요한 파생 데이터
