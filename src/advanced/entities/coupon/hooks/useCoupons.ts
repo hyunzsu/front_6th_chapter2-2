@@ -1,29 +1,19 @@
 import { useCallback } from 'react';
+import { useAtom, useAtomValue } from 'jotai';
 import { Coupon } from '../../../../types';
+import {
+  couponsAtom,
+  selectedCouponAtom,
+} from '../../../shared/store/couponsAtom';
+import { cartTotalsAtom } from '../../../shared/store/cartTotalsAtom';
+import { useNotification } from '../../../shared/utils';
 
-interface UseCouponsProps {
-  coupons: Coupon[];
-  setCoupons: React.Dispatch<React.SetStateAction<Coupon[]>>;
-  selectedCoupon: Coupon | null;
-  setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
-  addNotification: (
-    message: string,
-    type?: 'error' | 'success' | 'warning'
-  ) => void;
-  calculateCartTotalWithCoupon: () => {
-    totalBeforeDiscount: number;
-    totalAfterDiscount: number;
-  };
-}
+export function useCoupons() {
+  const { addNotification } = useNotification();
+  const [coupons, setCoupons] = useAtom(couponsAtom);
+  const [selectedCoupon, setSelectedCoupon] = useAtom(selectedCouponAtom);
+  const cartTotals = useAtomValue(cartTotalsAtom);
 
-export function useCoupons({
-  coupons,
-  setCoupons,
-  selectedCoupon,
-  setSelectedCoupon,
-  addNotification,
-  calculateCartTotalWithCoupon,
-}: UseCouponsProps) {
   // 쿠폰 추가
   const addCoupon = useCallback(
     (newCoupon: Coupon) => {
@@ -53,7 +43,7 @@ export function useCoupons({
   // 쿠폰 적용
   const applyCoupon = useCallback(
     (coupon: Coupon) => {
-      const currentTotal = calculateCartTotalWithCoupon().totalAfterDiscount;
+      const currentTotal = cartTotals.totalAfterDiscount;
 
       if (currentTotal < 10000 && coupon.discountType === 'percentage') {
         addNotification(
@@ -66,7 +56,7 @@ export function useCoupons({
       setSelectedCoupon(coupon);
       addNotification('쿠폰이 적용되었습니다.', 'success');
     },
-    [addNotification, calculateCartTotalWithCoupon, setSelectedCoupon]
+    [addNotification, cartTotals.totalAfterDiscount, setSelectedCoupon]
   );
 
   return {
