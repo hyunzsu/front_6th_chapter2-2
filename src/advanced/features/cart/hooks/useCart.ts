@@ -1,16 +1,17 @@
 import { useCallback } from 'react';
+import { useAtom } from 'jotai';
 import { CartItem } from '../../../../types';
 import { ProductWithUI } from '../../../entities/product';
 import { getRemainingStock, useNotification } from '../../../shared/utils';
+import { cartAtom } from '../../../shared/store';
 
 interface UseCartProps {
-  cart: CartItem[];
-  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   products: ProductWithUI[];
 }
 
-export function useCart({ cart, setCart, products }: UseCartProps) {
+export function useCart({ products }: UseCartProps) {
   const { addNotification } = useNotification();
+  const [cart, setCart] = useAtom(cartAtom);
 
   // 특정 상품의 장바구니 수량 찾기
   const getCartQuantity = useCallback(
@@ -35,45 +36,43 @@ export function useCart({ cart, setCart, products }: UseCartProps) {
         return;
       }
 
-      setCart((prevCart) => {
-        const existingItem = prevCart.find(
-          (item) => item.product.id === product.id
-        );
+      const existingItem = cart.find(
+        (item) => item.product.id === product.id
+      );
 
-        if (existingItem) {
-          const newQuantity = existingItem.quantity + 1;
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + 1;
 
-          if (newQuantity > product.stock) {
-            addNotification(
-              `재고는 ${product.stock}개까지만 있습니다.`,
-              'error'
-            );
-            return prevCart;
-          }
-
-          return prevCart.map((item) =>
-            item.product.id === product.id
-              ? { ...item, quantity: newQuantity }
-              : item
+        if (newQuantity > product.stock) {
+          addNotification(
+            `재고는 ${product.stock}개까지만 있습니다.`,
+            'error'
           );
+          return;
         }
 
-        return [...prevCart, { product, quantity: 1 }];
-      });
+        const newCart = cart.map((item) =>
+          item.product.id === product.id
+            ? { ...item, quantity: newQuantity }
+            : item
+        );
+        setCart(newCart);
+      } else {
+        setCart([...cart, { product, quantity: 1 }]);
+      }
 
       addNotification('장바구니에 담았습니다', 'success');
     },
-    [addNotification, getCartQuantity, setCart]
+    [addNotification, cart, setCart]
   );
 
   // 장바구니에서 상품 제거
   const removeFromCart = useCallback(
     (productId: string) => {
-      setCart((prevCart) =>
-        prevCart.filter((item) => item.product.id !== productId)
-      );
+      const newCart = cart.filter((item) => item.product.id !== productId);
+      setCart(newCart);
     },
-    [setCart]
+    [cart, setCart]
   );
 
   // 장바구니 상품 수량 업데이트
@@ -93,15 +92,14 @@ export function useCart({ cart, setCart, products }: UseCartProps) {
         return;
       }
 
-      setCart((prevCart) =>
-        prevCart.map((item) =>
-          item.product.id === productId
-            ? { ...item, quantity: newQuantity }
-            : item
-        )
+      const newCart = cart.map((item) =>
+        item.product.id === productId
+          ? { ...item, quantity: newQuantity }
+          : item
       );
+      setCart(newCart);
     },
-    [products, removeFromCart, addNotification, setCart]
+    [products, cart, removeFromCart, addNotification, setCart]
   );
 
   return {

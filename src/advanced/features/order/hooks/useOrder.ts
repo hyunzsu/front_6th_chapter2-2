@@ -1,14 +1,16 @@
 import { useCallback } from 'react';
-import { CartItem, Coupon } from '../../../../types';
+import { useSetAtom } from 'jotai';
+import { Coupon } from '../../../../types';
 import { useNotification } from '../../../shared/utils';
+import { cartAtom } from '../../../shared/store';
 
 interface UseOrderProps {
-  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
 }
 
-export function useOrder({ setCart, setSelectedCoupon }: UseOrderProps) {
+export function useOrder({ setSelectedCoupon }: UseOrderProps) {
   const { addNotification } = useNotification();
+  const setCart = useSetAtom(cartAtom);
 
   // 주문 완료 처리
   const completeOrder = useCallback(() => {
