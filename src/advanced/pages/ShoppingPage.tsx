@@ -3,21 +3,11 @@ import { ProductList } from '../features/product/shop/ui';
 import { useCart } from '../features/cart/hooks';
 import { useProductSearch } from '../features/product/shop/hooks';
 import { ShoppingSidebar } from '../widgets/ShoppingSidebar/ui';
-import { productsAtom } from '../shared/store';
+import { productsAtom, searchTermAtom } from '../shared/store';
 
-interface ShoppingPageProps {
-  searchTerm: string;
-  calculateCartTotalWithCoupon: () => {
-    totalBeforeDiscount: number;
-    totalAfterDiscount: number;
-  };
-}
-
-export default function ShoppingPage({
-  searchTerm,
-  calculateCartTotalWithCoupon,
-}: ShoppingPageProps) {
+export default function ShoppingPage() {
   const products = useAtomValue(productsAtom);
+  const searchTerm = useAtomValue(searchTermAtom);
   const { filteredProducts } = useProductSearch(products, searchTerm);
 
   const { addToCart } = useCart();
@@ -44,9 +34,7 @@ export default function ShoppingPage({
 
       {/* ShoppingSidebar (widgets) */}
       <div className='lg:col-span-1'>
-        <ShoppingSidebar
-          calculateCartTotalWithCoupon={calculateCartTotalWithCoupon}
-        />
+        <ShoppingSidebar />
       </div>
     </div>
   );

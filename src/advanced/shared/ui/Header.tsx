@@ -1,21 +1,18 @@
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useAtom } from 'jotai';
 import { SearchInput, Button } from '.';
-import { cartAtom } from '../store';
+import { cartAtom, searchTermAtom } from '../store';
 
 interface HeaderProps {
   isAdmin: boolean;
-  searchTerm: string;
   onToggleAdmin: () => void;
-  onSearchChange: (value: string) => void;
 }
 
 export default function Header({
   isAdmin,
-  searchTerm,
   onToggleAdmin,
-  onSearchChange,
 }: HeaderProps) {
   const cart = useAtomValue(cartAtom);
+  const [searchTerm, setSearchTerm] = useAtom(searchTermAtom);
   const totalItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const cartLength = cart.length;
 
@@ -29,7 +26,7 @@ export default function Header({
             {!isAdmin && (
               <SearchInput
                 value={searchTerm}
-                onChange={onSearchChange}
+                onChange={setSearchTerm}
                 placeholder='상품 검색...'
                 className='ml-8 flex-1 max-w-md'
               />
