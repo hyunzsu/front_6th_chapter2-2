@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { CartItem, Coupon, Product } from '../types';
+import { CartItem, Coupon } from '../types';
 
-import { ProductWithUI, initialProducts } from './entities/product';
+import { initialProducts } from './entities/product';
 import { initialCoupons } from './entities/coupon';
 import { calculateCartTotal } from './entities/cart';
 
@@ -11,15 +11,14 @@ import { NotificationToast, SearchInput, Button } from './shared/ui';
 import { useProductSearch } from './features/products/list/hooks';
 import { useProducts } from './features/products/management/hooks';
 import { ProductManagement } from './features/products/management/ui';
-import { ProductList } from './features/products/list/ui';
 
 import { useCart } from './features/cart/hooks';
-import { CartSidebar } from './features/cart/ui';
 
 import { useCoupons } from './features/coupons/hooks';
 import { CouponManagement } from './features/coupons/ui';
 
 import { useOrder } from './features/order/hooks';
+import ShoppingPage from './pages/ShoppingPage';
 
 const App = () => {
   // ============================================================================
@@ -74,8 +73,7 @@ const App = () => {
   const { notifications, addNotification, removeNotification } =
     useNotification();
 
-  const { searchTerm, setSearchTerm, filteredProducts } =
-    useProductSearch(products);
+  const { searchTerm, setSearchTerm, filteredProducts } = useProductSearch(products);
 
   const { addProduct, updateProduct, deleteProduct } = useProducts({
     products,
@@ -117,7 +115,6 @@ const App = () => {
     const count = cart.reduce((sum, item) => sum + item.quantity, 0);
     setTotalItemCount(count);
   }, [cart]);
-
 
   // ============================================================================
   // 계산된 값들 - 렌더링에 필요한 파생 데이터
@@ -252,45 +249,22 @@ const App = () => {
           // ============================================================================
           // 쇼핑몰 메인 페이지
           // ============================================================================
-          <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
-            <div className='lg:col-span-3'>
-              {/* 상품 목록 섹션 */}
-              <section>
-                <div className='mb-6 flex justify-between items-center'>
-                  <h2 className='text-2xl font-semibold text-gray-800'>
-                    전체 상품
-                  </h2>
-                  <div className='text-sm text-gray-600'>
-                    총 {products.length}개 상품
-                  </div>
-                </div>
-
-                <ProductList
-                  products={filteredProducts}
-                  searchTerm={searchTerm}
-                  // cart={cart}
-                  onAddToCart={addToCart}
-                  formatPrice={formatPrice}
-                  getRemainingStock={getRemainingStock}
-                />
-              </section>
-            </div>
-
-            {/* 장바구니 사이드바 */}
-            <div className='lg:col-span-1'>
-              <CartSidebar
-                cart={cart}
-                coupons={coupons}
-                selectedCoupon={selectedCoupon}
-                totals={totals}
-                onRemoveFromCart={removeFromCart}
-                onUpdateQuantity={updateQuantity}
-                onApplyCoupon={applyCoupon}
-                onSetSelectedCoupon={setSelectedCoupon}
-                onCompleteOrder={completeOrder}
-              />
-            </div>
-          </div>
+          <ShoppingPage
+            products={products}
+            filteredProducts={filteredProducts}
+            searchTerm={searchTerm}
+            cart={cart}
+            coupons={coupons}
+            selectedCoupon={selectedCoupon}
+            onAddToCart={addToCart}
+            getRemainingStock={getRemainingStock}
+            formatPrice={formatPrice}
+            onRemoveFromCart={removeFromCart}
+            onUpdateQuantity={updateQuantity}
+            onApplyCoupon={applyCoupon}
+            onSetSelectedCoupon={setSelectedCoupon}
+            onCompleteOrder={completeOrder}
+          />
         )}
       </main>
     </div>
