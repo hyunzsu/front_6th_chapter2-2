@@ -1,17 +1,14 @@
 import { useCallback } from 'react';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { CartItem } from '../../../../types';
 import { ProductWithUI } from '../../../entities/product';
 import { getRemainingStock, useNotification } from '../../../shared/utils';
-import { cartAtom } from '../../../shared/store';
+import { cartAtom, productsAtom } from '../../../shared/store';
 
-interface UseCartProps {
-  products: ProductWithUI[];
-}
-
-export function useCart({ products }: UseCartProps) {
+export function useCart() {
   const { addNotification } = useNotification();
   const [cart, setCart] = useAtom(cartAtom);
+  const products = useAtomValue(productsAtom);
 
   // 특정 상품의 장바구니 수량 찾기
   const getCartQuantity = useCallback(

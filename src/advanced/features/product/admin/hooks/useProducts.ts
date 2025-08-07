@@ -1,17 +1,12 @@
 import { useCallback } from 'react';
+import { useAtom } from 'jotai';
 import { useNotification } from '../../../../shared/utils';
 import { ProductWithUI } from '../../../../entities/product';
+import { productsAtom } from '../../../../shared/store';
 
-interface UseProductsProps {
-  products: ProductWithUI[];
-  setProducts: React.Dispatch<React.SetStateAction<ProductWithUI[]>>;
-}
-
-export function useProducts({
-  products,
-  setProducts,
-}: UseProductsProps) {
+export function useProducts() {
   const { addNotification } = useNotification();
+  const [products, setProducts] = useAtom(productsAtom);
   // 상품 추가
   const addProduct = useCallback(
     (newProduct: Omit<ProductWithUI, 'id'>) => {
