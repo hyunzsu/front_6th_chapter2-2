@@ -36,8 +36,7 @@ export default function ShoppingPage({
 }: ShoppingPageProps) {
   const { filteredProducts } = useProductSearch(products, searchTerm);
 
-  // ProductList용 로직만 (addToCart, getCartQuantity)
-  const { addToCart, getCartQuantity } = useCart({
+  const { addToCart } = useCart({
     cart,
     setCart,
     products,

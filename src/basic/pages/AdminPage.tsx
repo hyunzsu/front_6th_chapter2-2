@@ -22,11 +22,9 @@ export default function AdminPage({
   setCoupons,
   addNotification,
 }: AdminPageProps) {
-  // 관리자 페이지 내부 상태 (탭 관리)
   const [activeTab, setActiveTab] = useState<'products' | 'coupons'>(
     'products'
   );
-
 
   return (
     <div className='max-w-6xl mx-auto'>
