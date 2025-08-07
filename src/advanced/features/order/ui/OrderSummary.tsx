@@ -8,9 +8,7 @@ interface OrderSummaryProps {
   };
 }
 
-export function OrderSummary({
-  totals,
-}: OrderSummaryProps) {
+export function OrderSummary({ totals }: OrderSummaryProps) {
   const { completeOrder } = useOrder();
 
   return (

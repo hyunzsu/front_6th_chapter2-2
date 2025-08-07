@@ -1,35 +1,10 @@
-import { useState, useCallback } from 'react';
-import { useAtom } from 'jotai';
-import { Coupon } from '../../../../../types';
+import { useState } from 'react';
 import CouponTable from './CouponTable';
 import CouponForm from './CouponForm';
-import { useNotification } from '../../../../shared/utils';
-import { couponsAtom } from '../../../../shared/store';
+import { useCoupons } from '../../../../entities/coupon/hooks/useCoupons';
 
 export default function CouponManagement() {
-  const [coupons, setCoupons] = useAtom(couponsAtom);
-  const { addNotification } = useNotification();
-
-  const addCoupon = useCallback(
-    (newCoupon: Coupon) => {
-      const existingCoupon = coupons.find((c) => c.code === newCoupon.code);
-      if (existingCoupon) {
-        addNotification('이미 존재하는 쿠폰 코드입니다.', 'error');
-        return;
-      }
-      setCoupons((prev) => [...prev, newCoupon]);
-      addNotification('쿠폰이 추가되었습니다.', 'success');
-    },
-    [coupons, addNotification, setCoupons]
-  );
-
-  const deleteCoupon = useCallback(
-    (couponCode: string) => {
-      setCoupons((prev) => prev.filter((c) => c.code !== couponCode));
-      addNotification('쿠폰이 삭제되었습니다.', 'success');
-    },
-    [addNotification, setCoupons]
-  );
+  const { coupons, addCoupon, deleteCoupon } = useCoupons();
 
   const [showCouponForm, setShowCouponForm] = useState(false);
   const [couponForm, setCouponForm] = useState({

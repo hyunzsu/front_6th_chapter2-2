@@ -4,7 +4,6 @@ import ShoppingPage from './pages/ShoppingPage';
 import AdminPage from './pages/AdminPage';
 
 const App = () => {
-  // 로컬 UI 상태 관리
   const [isAdmin, setIsAdmin] = useState(false);
 
   return (
@@ -12,17 +11,10 @@ const App = () => {
       {/* 알림 시스템 */}
       <NotificationToast />
       {/* 헤더 */}
-      <Header
-        isAdmin={isAdmin}
-        onToggleAdmin={() => setIsAdmin(!isAdmin)}
-      />
+      <Header isAdmin={isAdmin} onToggleAdmin={() => setIsAdmin(!isAdmin)} />
       {/* 메인 컨텐츠 */}
       <main className='max-w-7xl mx-auto px-4 py-8'>
-        {isAdmin ? (
-          <AdminPage />
-        ) : (
-          <ShoppingPage />
-        )}
+        {isAdmin ? <AdminPage /> : <ShoppingPage />}
       </main>
     </div>
   );

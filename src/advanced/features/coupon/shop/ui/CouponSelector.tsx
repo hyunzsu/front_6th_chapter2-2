@@ -3,7 +3,11 @@ import { useAtomValue, useAtom } from 'jotai';
 import { Coupon } from '../../../../../types';
 import { Button } from '../../../../shared/ui';
 import { useNotification } from '../../../../shared/utils';
-import { couponsAtom, selectedCouponAtom, cartTotalsAtom } from '../../../../shared/store';
+import {
+  couponsAtom,
+  selectedCouponAtom,
+  cartTotalsAtom,
+} from '../../../../shared/store';
 
 export function CouponSelector() {
   const coupons = useAtomValue(couponsAtom);
