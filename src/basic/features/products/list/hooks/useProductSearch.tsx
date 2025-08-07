@@ -1,9 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ProductWithUI } from '../../../../entities/product';
 import { useDebounce } from '../../../../shared/hooks';
 
-export function useProductSearch(products: ProductWithUI[]) {
-  const [searchTerm, setSearchTerm] = useState('');
+export function useProductSearch(
+  products: ProductWithUI[],
+  searchTerm: string
+) {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const filteredProducts = useMemo(() => {
@@ -24,8 +26,6 @@ export function useProductSearch(products: ProductWithUI[]) {
   }, [products, debouncedSearchTerm]);
 
   return {
-    searchTerm,
-    setSearchTerm,
     debouncedSearchTerm,
     filteredProducts,
   };

@@ -1,56 +1,81 @@
 import { useMemo } from 'react';
 import { CartItem, Coupon } from '../../types';
 import { ProductWithUI } from '../entities/product';
-import { calculateCartTotal } from '../entities/cart';
 import { ProductList } from '../features/products/list/ui';
 import { CartSidebar } from '../features/cart/ui';
+import { useCoupons } from '../features/coupons/hooks';
+import { useCart } from '../features/cart/hooks';
+import { useOrder } from '../features/order/hooks';
+import { useProductSearch } from '../features/products/list/hooks';
 
 interface ShoppingPageProps {
-  // 상태들
   products: ProductWithUI[];
-  filteredProducts: ProductWithUI[];
   searchTerm: string;
   cart: CartItem[];
+  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   coupons: Coupon[];
   selectedCoupon: Coupon | null;
-
-  // 상품 관련 핸들러
-  onAddToCart: (product: ProductWithUI) => void;
-  getRemainingStock: (product: ProductWithUI) => number;
-  formatPrice: (price: number, productId?: string) => string;
-
-  // 장바구니 관련 핸들러
-  onRemoveFromCart: (productId: string) => void;
-  onUpdateQuantity: (productId: string, newQuantity: number) => void;
-
-  // 쿠폰 관련 핸들러
-  onApplyCoupon: (coupon: Coupon) => void;
-  onSetSelectedCoupon: (coupon: Coupon | null) => void;
-
-  // 주문 관련 핸들러
-  onCompleteOrder: () => void;
+  setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
+  addNotification: (
+    message: string,
+    type?: 'error' | 'success' | 'warning'
+  ) => void;
+  calculateCartTotalWithCoupon: () => {
+    totalBeforeDiscount: number;
+    totalAfterDiscount: number;
+  };
 }
 
 export default function ShoppingPage({
   products,
-  filteredProducts,
   searchTerm,
   cart,
+  setCart,
   coupons,
   selectedCoupon,
-  onAddToCart,
-  getRemainingStock,
-  formatPrice,
-  onRemoveFromCart,
-  onUpdateQuantity,
-  onApplyCoupon,
-  onSetSelectedCoupon,
-  onCompleteOrder,
+  setSelectedCoupon,
+  addNotification,
+  calculateCartTotalWithCoupon,
 }: ShoppingPageProps) {
-  // 장바구니 전체 금액 계산 (쿠폰 할인 포함)
+  const { filteredProducts } = useProductSearch(products, searchTerm);
+
+  const { addToCart, removeFromCart, updateQuantity, getRemainingStock } =
+    useCart({
+      cart,
+      setCart,
+      products,
+      addNotification,
+    });
+
+  const { applyCoupon } = useCoupons({
+    coupons,
+    setCoupons: () => {}, // Shopping에서는 쿠폰 수정 불필요
+    selectedCoupon,
+    setSelectedCoupon,
+    addNotification,
+    calculateCartTotalWithCoupon,
+  });
+
+  const { completeOrder } = useOrder({
+    setCart,
+    setSelectedCoupon,
+    addNotification,
+  });
+
+  // ShoppingPage용 가격 포맷팅 (고객 전용)
+  const formatPrice = (price: number, productId?: string): string => {
+    if (productId) {
+      const product = products.find((p) => p.id === productId);
+      if (product && getRemainingStock(product) <= 0) {
+        return 'SOLD OUT';
+      }
+    }
+    return `₩${price.toLocaleString()}`; // 고객은 ₩ 표시
+  };
+
   const totals = useMemo(() => {
-    return calculateCartTotal(cart, selectedCoupon);
-  }, [cart, selectedCoupon]);
+    return calculateCartTotalWithCoupon();
+  }, [calculateCartTotalWithCoupon]);
 
   return (
     <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
@@ -67,7 +92,7 @@ export default function ShoppingPage({
           <ProductList
             products={filteredProducts}
             searchTerm={searchTerm}
-            onAddToCart={onAddToCart}
+            onAddToCart={addToCart}
             formatPrice={formatPrice}
             getRemainingStock={getRemainingStock}
           />
@@ -81,11 +106,11 @@ export default function ShoppingPage({
           coupons={coupons}
           selectedCoupon={selectedCoupon}
           totals={totals}
-          onRemoveFromCart={onRemoveFromCart}
-          onUpdateQuantity={onUpdateQuantity}
-          onApplyCoupon={onApplyCoupon}
-          onSetSelectedCoupon={onSetSelectedCoupon}
-          onCompleteOrder={onCompleteOrder}
+          onRemoveFromCart={removeFromCart}
+          onUpdateQuantity={updateQuantity}
+          onApplyCoupon={applyCoupon}
+          onSetSelectedCoupon={setSelectedCoupon}
+          onCompleteOrder={completeOrder}
         />
       </div>
     </div>

@@ -3,21 +3,14 @@ import { Coupon } from '../../types';
 import { ProductWithUI } from '../entities/product';
 import { ProductManagement } from '../features/products/management/ui';
 import { CouponManagement } from '../features/coupons/ui';
+import { useProducts } from '../features/products/management/hooks';
+import { useCoupons } from '../features/coupons/hooks';
 
 interface AdminPageProps {
-  // 상품 관련
   products: ProductWithUI[];
-  onAddProduct: (product: Omit<ProductWithUI, 'id'>) => void;
-  onUpdateProduct: (productId: string, updates: Partial<ProductWithUI>) => void;
-  onDeleteProduct: (productId: string) => void;
-
-  // 쿠폰 관련
+  setProducts: React.Dispatch<React.SetStateAction<ProductWithUI[]>>;
   coupons: Coupon[];
-  onAddCoupon: (coupon: Coupon) => void;
-  onDeleteCoupon: (couponCode: string) => void;
-
-  // 유틸리티
-  formatPrice: (price: number, productId?: string) => string;
+  setCoupons: React.Dispatch<React.SetStateAction<Coupon[]>>;
   addNotification: (
     message: string,
     type?: 'error' | 'success' | 'warning'
@@ -26,19 +19,37 @@ interface AdminPageProps {
 
 export default function AdminPage({
   products,
-  onAddProduct,
-  onUpdateProduct,
-  onDeleteProduct,
+  setProducts,
   coupons,
-  onAddCoupon,
-  onDeleteCoupon,
-  formatPrice,
+  setCoupons,
   addNotification,
 }: AdminPageProps) {
   // 관리자 페이지 내부 상태 (탭 관리)
   const [activeTab, setActiveTab] = useState<'products' | 'coupons'>(
     'products'
   );
+
+  const { addProduct, updateProduct, deleteProduct } = useProducts({
+    products,
+    setProducts,
+    addNotification,
+  });
+
+  const { addCoupon, deleteCoupon } = useCoupons({
+    coupons,
+    setCoupons,
+    selectedCoupon: null, // Admin에서는 쿠폰 선택 불필요
+    setSelectedCoupon: () => {}, // Admin에서는 쿠폰 선택 불필요
+    addNotification,
+    calculateCartTotalWithCoupon: () => ({
+      totalBeforeDiscount: 0,
+      totalAfterDiscount: 0,
+    }),
+  });
+
+  const formatPrice = (price: number): string => {
+    return `${price.toLocaleString()}원`; // 관리자는 항상 원화 표시
+  };
 
   return (
     <div className='max-w-6xl mx-auto'>
@@ -78,17 +89,17 @@ export default function AdminPage({
       {activeTab === 'products' ? (
         <ProductManagement
           products={products}
-          onAddProduct={onAddProduct}
-          onUpdateProduct={onUpdateProduct}
-          onDeleteProduct={onDeleteProduct}
+          onAddProduct={addProduct}
+          onUpdateProduct={updateProduct}
+          onDeleteProduct={deleteProduct}
           formatPrice={formatPrice}
           addNotification={addNotification}
         />
       ) : (
         <CouponManagement
           coupons={coupons}
-          onAddCoupon={onAddCoupon}
-          onDeleteCoupon={onDeleteCoupon}
+          onAddCoupon={addCoupon}
+          onDeleteCoupon={deleteCoupon}
           addNotification={addNotification}
         />
       )}

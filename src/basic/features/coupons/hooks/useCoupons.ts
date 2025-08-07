@@ -24,7 +24,7 @@ export function useCoupons({
   addNotification,
   calculateCartTotalWithCoupon,
 }: UseCouponsProps) {
-  // 새 쿠폰 추가
+  // 쿠폰 추가
   const addCoupon = useCallback(
     (newCoupon: Coupon) => {
       const existingCoupon = coupons.find((c) => c.code === newCoupon.code);
