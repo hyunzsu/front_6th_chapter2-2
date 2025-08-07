@@ -4,7 +4,7 @@ import { ProductWithUI } from '../../../entities/product';
 import { useCart } from '../../../features/cart/hooks';
 import { calculateCartTotal } from '../../../entities/cart';
 import { CartItemsList } from '../../../features/cart/ui';
-import { CouponSelector } from '../../../features/coupons/shop/ui';
+import { CouponSelector } from '../../../features/coupon/shop/ui';
 import { OrderSummary } from '../../../features/order/ui';
 
 interface ShoppingSidebarProps {

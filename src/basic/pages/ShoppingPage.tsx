@@ -1,12 +1,9 @@
-import { useMemo } from 'react';
 import { CartItem, Coupon } from '../../types';
 import { ProductWithUI } from '../entities/product';
-import { ProductList } from '../features/products/shop/ui';
-import { CartSidebar } from '../features/cart/ui';
-import { useCoupons } from '../features/coupons/hooks';
+import { ProductList } from '../features/product/shop/ui';
 import { useCart } from '../features/cart/hooks';
-import { useOrder } from '../features/order/hooks';
-import { useProductSearch } from '../features/products/shop/hooks';
+import { useProductSearch } from '../features/product/shop/hooks';
+import { ShoppingSidebar } from '../widgets/ShoppingSidebar/ui';
 
 interface ShoppingPageProps {
   products: ProductWithUI[];
@@ -39,30 +36,14 @@ export default function ShoppingPage({
 }: ShoppingPageProps) {
   const { filteredProducts } = useProductSearch(products, searchTerm);
 
-  const { addToCart, removeFromCart, updateQuantity, getRemainingStock } =
-    useCart({
-      cart,
-      setCart,
-      products,
-      addNotification,
-    });
-
-  const { applyCoupon } = useCoupons({
-    coupons,
-    setCoupons: () => {}, // Shopping에서는 쿠폰 수정 불필요
-    selectedCoupon,
-    setSelectedCoupon,
-    addNotification,
-    calculateCartTotalWithCoupon,
-  });
-
-  const { completeOrder } = useOrder({
+  // ProductList용 로직만 (addToCart, getRemainingStock)
+  const { addToCart, getRemainingStock } = useCart({
+    cart,
     setCart,
-    setSelectedCoupon,
+    products,
     addNotification,
   });
 
-  // ShoppingPage용 가격 포맷팅 (고객 전용)
   const formatPrice = (price: number, productId?: string): string => {
     if (productId) {
       const product = products.find((p) => p.id === productId);
@@ -70,12 +51,8 @@ export default function ShoppingPage({
         return 'SOLD OUT';
       }
     }
-    return `₩${price.toLocaleString()}`; // 고객은 ₩ 표시
+    return `₩${price.toLocaleString()}`;
   };
-
-  const totals = useMemo(() => {
-    return calculateCartTotalWithCoupon();
-  }, [calculateCartTotalWithCoupon]);
 
   return (
     <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
@@ -99,18 +76,17 @@ export default function ShoppingPage({
         </section>
       </div>
 
-      {/* 장바구니 사이드바 */}
+      {/* ShoppingSidebar (widgets) */}
       <div className='lg:col-span-1'>
-        <CartSidebar
+        <ShoppingSidebar
           cart={cart}
+          setCart={setCart}
           coupons={coupons}
           selectedCoupon={selectedCoupon}
-          totals={totals}
-          onRemoveFromCart={removeFromCart}
-          onUpdateQuantity={updateQuantity}
-          onApplyCoupon={applyCoupon}
-          onSetSelectedCoupon={setSelectedCoupon}
-          onCompleteOrder={completeOrder}
+          setSelectedCoupon={setSelectedCoupon}
+          products={products}
+          addNotification={addNotification}
+          calculateCartTotalWithCoupon={calculateCartTotalWithCoupon}
         />
       </div>
     </div>
