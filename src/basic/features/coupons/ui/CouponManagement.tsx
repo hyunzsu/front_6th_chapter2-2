@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Coupon } from '../../../../types';
 import { Button } from '../../../shared/ui';
+import { useCoupons } from '../hooks';
 
 interface CouponManagementProps {
   coupons: Coupon[];
-  onAddCoupon: (coupon: Coupon) => void;
-  onDeleteCoupon: (couponCode: string) => void;
+  setCoupons: React.Dispatch<React.SetStateAction<Coupon[]>>;
   addNotification: (
     message: string,
     type?: 'error' | 'success' | 'warning'
@@ -14,10 +14,21 @@ interface CouponManagementProps {
 
 export function CouponManagement({
   coupons,
-  onAddCoupon,
-  onDeleteCoupon,
+  setCoupons,
   addNotification,
 }: CouponManagementProps) {
+  const { addCoupon, deleteCoupon } = useCoupons({
+    coupons,
+    setCoupons,
+    selectedCoupon: null, // Admin에서는 쿠폰 선택 불필요
+    setSelectedCoupon: () => {}, // Admin에서는 쿠폰 선택 불필요
+    addNotification,
+    calculateCartTotalWithCoupon: () => ({
+      totalBeforeDiscount: 0,
+      totalAfterDiscount: 0,
+    }),
+  });
+
   const [showCouponForm, setShowCouponForm] = useState(false);
   const [couponForm, setCouponForm] = useState({
     name: '',
@@ -29,7 +40,7 @@ export function CouponManagement({
   // 쿠폰 폼 제출
   const handleCouponSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAddCoupon(couponForm);
+    addCoupon(couponForm);
     setCouponForm({
       name: '',
       code: '',
@@ -66,7 +77,7 @@ export function CouponManagement({
                   </div>
                 </div>
                 <Button
-                  onClick={() => onDeleteCoupon(coupon.code)}
+                  onClick={() => deleteCoupon(coupon.code)}
                   variant='icon'
                 >
                   <svg
@@ -115,7 +126,9 @@ export function CouponManagement({
         {showCouponForm && (
           <div className='mt-6 p-4 bg-gray-50 rounded-lg'>
             <form onSubmit={handleCouponSubmit} className='space-y-4'>
-              <h3 className='text-md font-medium text-gray-900'>새 쿠폰 생성</h3>
+              <h3 className='text-md font-medium text-gray-900'>
+                새 쿠폰 생성
+              </h3>
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 mb-1'>
@@ -162,9 +175,7 @@ export function CouponManagement({
                     onChange={(e) =>
                       setCouponForm({
                         ...couponForm,
-                        discountType: e.target.value as
-                          | 'amount'
-                          | 'percentage',
+                        discountType: e.target.value as 'amount' | 'percentage',
                       })
                     }
                     className='w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2 border text-sm'

@@ -3,8 +3,6 @@ import { Coupon } from '../../types';
 import { ProductWithUI } from '../entities/product';
 import { ProductManagement } from '../features/products/management/ui';
 import { CouponManagement } from '../features/coupons/ui';
-import { useProducts } from '../features/products/management/hooks';
-import { useCoupons } from '../features/coupons/hooks';
 
 interface AdminPageProps {
   products: ProductWithUI[];
@@ -28,24 +26,6 @@ export default function AdminPage({
   const [activeTab, setActiveTab] = useState<'products' | 'coupons'>(
     'products'
   );
-
-  const { addProduct, updateProduct, deleteProduct } = useProducts({
-    products,
-    setProducts,
-    addNotification,
-  });
-
-  const { addCoupon, deleteCoupon } = useCoupons({
-    coupons,
-    setCoupons,
-    selectedCoupon: null, // Admin에서는 쿠폰 선택 불필요
-    setSelectedCoupon: () => {}, // Admin에서는 쿠폰 선택 불필요
-    addNotification,
-    calculateCartTotalWithCoupon: () => ({
-      totalBeforeDiscount: 0,
-      totalAfterDiscount: 0,
-    }),
-  });
 
   const formatPrice = (price: number): string => {
     return `${price.toLocaleString()}원`; // 관리자는 항상 원화 표시
@@ -89,17 +69,14 @@ export default function AdminPage({
       {activeTab === 'products' ? (
         <ProductManagement
           products={products}
-          onAddProduct={addProduct}
-          onUpdateProduct={updateProduct}
-          onDeleteProduct={deleteProduct}
+          setProducts={setProducts}
           formatPrice={formatPrice}
           addNotification={addNotification}
         />
       ) : (
         <CouponManagement
           coupons={coupons}
-          onAddCoupon={addCoupon}
-          onDeleteCoupon={deleteCoupon}
+          setCoupons={setCoupons}
           addNotification={addNotification}
         />
       )}

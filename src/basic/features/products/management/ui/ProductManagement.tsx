@@ -1,12 +1,11 @@
 import { FormEvent, useState } from 'react';
 import { ProductWithUI } from '../../../../entities/product';
 import { Button } from '../../../../shared/ui';
+import { useProducts } from '../hooks';
 
 interface ProductManagementProps {
   products: ProductWithUI[];
-  onAddProduct: (product: Omit<ProductWithUI, 'id'>) => void;
-  onUpdateProduct: (productId: string, updates: Partial<ProductWithUI>) => void;
-  onDeleteProduct: (productId: string) => void;
+  setProducts: React.Dispatch<React.SetStateAction<ProductWithUI[]>>;
   formatPrice: (price: number, productId?: string) => string;
   addNotification: (
     message: string,
@@ -16,12 +15,16 @@ interface ProductManagementProps {
 
 export default function ProductManagement({
   products,
-  onAddProduct,
-  onUpdateProduct,
-  onDeleteProduct,
+  setProducts,
   formatPrice,
   addNotification,
 }: ProductManagementProps) {
+  const { addProduct, updateProduct, deleteProduct } = useProducts({
+    products,
+    setProducts,
+    addNotification,
+  });
+
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<string | null>(null);
   const [productForm, setProductForm] = useState({
@@ -35,10 +38,10 @@ export default function ProductManagement({
   const handleProductSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (editingProduct && editingProduct !== 'new') {
-      onUpdateProduct(editingProduct, productForm);
+      updateProduct(editingProduct, productForm);
       setEditingProduct(null);
     } else {
-      onAddProduct(productForm);
+      addProduct(productForm);
     }
     setProductForm({
       name: '',
@@ -144,7 +147,7 @@ export default function ProductManagement({
                     수정
                   </Button>
                   <Button
-                    onClick={() => onDeleteProduct(product.id)}
+                    onClick={() => deleteProduct(product.id)}
                     variant='danger'
                   >
                     삭제
