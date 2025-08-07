@@ -1,19 +1,40 @@
+import { CartItem } from '../../../../../types';
 import { ProductWithUI } from '../../../../entities/product';
 import { Button } from '../../../../shared/ui';
+import { formatPrice, getRemainingStock, getProductStockStatus } from '../../../../shared/utils';
 
 interface ProductCardProps {
   product: ProductWithUI;
-  remainingStock: number;
+  cart: CartItem[];
   onAddToCart: (product: ProductWithUI) => void;
-  formatPrice: (price: number, productId?: string) => string;
 }
 
 export default function ProductCard({
   product,
-  remainingStock,
+  cart,
   onAddToCart,
-  formatPrice,
 }: ProductCardProps) {
+  // 장바구니에서 현재 상품 수량 찾기
+  const cartQuantity = cart.find(item => item.product.id === product.id)?.quantity || 0;
+  
+  // 남은 재고 계산
+  const remainingStock = getRemainingStock({
+    stock: product.stock,
+    cartQuantity
+  });
+  
+  // 품절 상태 체크
+  const stockStatus = getProductStockStatus({
+    stock: product.stock,
+    cartQuantity
+  });
+  
+  // 가격 표시 함수
+  const displayPrice = () => {
+    if (stockStatus) return stockStatus;
+    const formatted = formatPrice(product.price);
+    return `₩${formatted}`;
+  };
   return (
     <div className='bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow'>
       {/* 상품 이미지 영역 (placeholder) */}
@@ -57,7 +78,7 @@ export default function ProductCard({
         {/* 가격 정보 */}
         <div className='mb-3'>
           <p className='text-lg font-bold text-gray-900'>
-            {formatPrice(product.price, product.id)}
+            {displayPrice()}
           </p>
           {product.discounts.length > 0 && (
             <p className='text-xs text-gray-500'>

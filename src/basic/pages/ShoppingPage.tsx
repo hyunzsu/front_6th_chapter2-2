@@ -36,23 +36,13 @@ export default function ShoppingPage({
 }: ShoppingPageProps) {
   const { filteredProducts } = useProductSearch(products, searchTerm);
 
-  // ProductList용 로직만 (addToCart, getRemainingStock)
-  const { addToCart, getRemainingStock } = useCart({
+  // ProductList용 로직만 (addToCart, getCartQuantity)
+  const { addToCart, getCartQuantity } = useCart({
     cart,
     setCart,
     products,
     addNotification,
   });
-
-  const formatPrice = (price: number, productId?: string): string => {
-    if (productId) {
-      const product = products.find((p) => p.id === productId);
-      if (product && getRemainingStock(product) <= 0) {
-        return 'SOLD OUT';
-      }
-    }
-    return `₩${price.toLocaleString()}`;
-  };
 
   return (
     <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
@@ -69,9 +59,8 @@ export default function ShoppingPage({
           <ProductList
             products={filteredProducts}
             searchTerm={searchTerm}
+            cart={cart}
             onAddToCart={addToCart}
-            formatPrice={formatPrice}
-            getRemainingStock={getRemainingStock}
           />
         </section>
       </div>

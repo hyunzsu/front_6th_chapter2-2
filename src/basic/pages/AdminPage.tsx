@@ -27,9 +27,6 @@ export default function AdminPage({
     'products'
   );
 
-  const formatPrice = (price: number): string => {
-    return `${price.toLocaleString()}원`; // 관리자는 항상 원화 표시
-  };
 
   return (
     <div className='max-w-6xl mx-auto'>
@@ -70,7 +67,6 @@ export default function AdminPage({
         <ProductManagement
           products={products}
           setProducts={setProducts}
-          formatPrice={formatPrice}
           addNotification={addNotification}
         />
       ) : (

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
-import { CartItem, Product } from '../../../../types';
+import { CartItem } from '../../../../types';
 import { ProductWithUI } from '../../../entities/product';
+import { getRemainingStock } from '../../../shared/utils';
 
 interface UseCartProps {
   cart: CartItem[];
@@ -18,12 +19,11 @@ export function useCart({
   products,
   addNotification,
 }: UseCartProps) {
-  // 남은 재고 계산 (전체 재고 - 장바구니 수량)
-  const getRemainingStock = useCallback(
-    (product: Product): number => {
-      const cartItem = cart.find((item) => item.product.id === product.id);
-      const remaining = product.stock - (cartItem?.quantity || 0);
-      return remaining;
+  // 특정 상품의 장바구니 수량 찾기
+  const getCartQuantity = useCallback(
+    (productId: string): number => {
+      const cartItem = cart.find((item) => item.product.id === productId);
+      return cartItem?.quantity || 0;
     },
     [cart]
   );
@@ -31,7 +31,12 @@ export function useCart({
   // 장바구니에 상품 추가
   const addToCart = useCallback(
     (product: ProductWithUI) => {
-      const remainingStock = getRemainingStock(product);
+      const cartQuantity = getCartQuantity(product.id);
+      const remainingStock = getRemainingStock({ 
+        stock: product.stock, 
+        cartQuantity 
+      });
+      
       if (remainingStock <= 0) {
         addNotification('재고가 부족합니다!', 'error');
         return;
@@ -65,7 +70,7 @@ export function useCart({
 
       addNotification('장바구니에 담았습니다', 'success');
     },
-    [addNotification, getRemainingStock, setCart]
+    [addNotification, getCartQuantity, setCart]
   );
 
   // 장바구니에서 상품 제거
@@ -111,6 +116,6 @@ export function useCart({
     addToCart,
     removeFromCart,
     updateQuantity,
-    getRemainingStock,
+    getCartQuantity,
   };
 }

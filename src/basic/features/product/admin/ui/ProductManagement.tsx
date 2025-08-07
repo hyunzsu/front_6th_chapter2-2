@@ -8,7 +8,6 @@ import ProductForm from './ProductForm';
 interface ProductManagementProps {
   products: ProductWithUI[];
   setProducts: React.Dispatch<React.SetStateAction<ProductWithUI[]>>;
-  formatPrice: (price: number, productId?: string) => string;
   addNotification: (
     message: string,
     type?: 'error' | 'success' | 'warning'
@@ -18,7 +17,6 @@ interface ProductManagementProps {
 export default function ProductManagement({
   products,
   setProducts,
-  formatPrice,
   addNotification,
 }: ProductManagementProps) {
   const { addProduct, updateProduct, deleteProduct } = useProducts({
@@ -96,7 +94,6 @@ export default function ProductManagement({
 
       <ProductTable
         products={products}
-        formatPrice={formatPrice}
         onEdit={startEditProduct}
         onDelete={deleteProduct}
       />

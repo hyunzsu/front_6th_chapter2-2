@@ -1,19 +1,23 @@
 import { ProductWithUI } from '../../../../entities/product';
 import { Button } from '../../../../shared/ui';
+import { formatPrice } from '../../../../shared/utils';
 
 interface ProductTableProps {
   products: ProductWithUI[];
-  formatPrice: (price: number, productId?: string) => string;
   onEdit: (product: ProductWithUI) => void;
   onDelete: (productId: string) => void;
 }
 
 export default function ProductTable({
   products,
-  formatPrice,
   onEdit,
   onDelete,
 }: ProductTableProps) {
+  // 관리자용 가격 표시 함수
+  const displayAdminPrice = (price: number) => {
+    const formatted = formatPrice(price);
+    return `${formatted}원`;
+  };
   return (
     <div className='overflow-x-auto'>
       <table className='w-full'>
@@ -43,7 +47,7 @@ export default function ProductTable({
                 {product.name}
               </td>
               <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                {formatPrice(product.price, product.id)}
+                {displayAdminPrice(product.price)}
               </td>
               <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
                 <span

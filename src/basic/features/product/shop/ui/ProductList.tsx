@@ -1,23 +1,19 @@
-// import { CartItem } from '../../../../../types';
+import { CartItem } from '../../../../../types';
 import { ProductWithUI } from '../../../../entities/product';
 import ProductCard from './ProductCard';
 
 interface ProductListProps {
   products: ProductWithUI[];
   searchTerm: string;
-  // cart: CartItem[];
+  cart: CartItem[];
   onAddToCart: (product: ProductWithUI) => void;
-  formatPrice: (price: number, productId?: string) => string;
-  getRemainingStock: (product: ProductWithUI) => number;
 }
 
 export default function ProductList({
   products,
   searchTerm,
-  // cart,
+  cart,
   onAddToCart,
-  formatPrice,
-  getRemainingStock,
 }: ProductListProps) {
   if (products.length === 0) {
     return (
@@ -32,15 +28,12 @@ export default function ProductList({
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
       {products.map((product) => {
-        const remainingStock = getRemainingStock(product);
-
         return (
           <ProductCard
             key={product.id}
             product={product}
-            remainingStock={remainingStock}
+            cart={cart}
             onAddToCart={onAddToCart}
-            formatPrice={formatPrice}
           />
         );
       })}
