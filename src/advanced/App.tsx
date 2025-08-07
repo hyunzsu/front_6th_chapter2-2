@@ -1,17 +1,19 @@
 import { useState, useCallback } from 'react';
-import { CartItem, Coupon } from '../types';
+import { useAtomValue } from 'jotai';
+import { Coupon } from '../types';
 import { initialProducts } from './entities/product';
 import { initialCoupons } from './entities/coupon';
 import { calculateCartTotal } from './entities/cart';
 import { useLocalStorage } from './shared/hooks';
 import { NotificationToast, Header } from './shared/ui';
+import { cartAtom } from './shared/store';
 import ShoppingPage from './pages/ShoppingPage';
 import AdminPage from './pages/AdminPage';
 
 const App = () => {
   // localStorage와 연동된 데이터 상태들
   const [products, setProducts] = useLocalStorage('products', initialProducts);
-  const [cart, setCart] = useLocalStorage<CartItem[]>('cart', []);
+  const cart = useAtomValue(cartAtom);
   const [coupons, setCoupons] = useLocalStorage('coupons', initialCoupons);
 
   // UI 상태 관리
@@ -36,7 +38,6 @@ const App = () => {
       <Header
         isAdmin={isAdmin}
         searchTerm={searchTerm}
-        cart={cart}
         onToggleAdmin={() => setIsAdmin(!isAdmin)}
         onSearchChange={setSearchTerm}
       />
@@ -53,8 +54,6 @@ const App = () => {
           <ShoppingPage
             products={products}
             searchTerm={searchTerm}
-            cart={cart}
-            setCart={setCart}
             coupons={coupons}
             selectedCoupon={selectedCoupon}
             setSelectedCoupon={setSelectedCoupon}

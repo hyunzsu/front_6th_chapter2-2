@@ -1,10 +1,10 @@
+import { useAtomValue } from 'jotai';
 import { SearchInput, Button } from '.';
-import { CartItem } from '../../../types';
+import { cartAtom } from '../store';
 
 interface HeaderProps {
   isAdmin: boolean;
   searchTerm: string;
-  cart: CartItem[];
   onToggleAdmin: () => void;
   onSearchChange: (value: string) => void;
 }
@@ -12,10 +12,10 @@ interface HeaderProps {
 export default function Header({
   isAdmin,
   searchTerm,
-  cart,
   onToggleAdmin,
   onSearchChange,
 }: HeaderProps) {
+  const cart = useAtomValue(cartAtom);
   const totalItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const cartLength = cart.length;
 

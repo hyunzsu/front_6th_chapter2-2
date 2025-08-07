@@ -1,4 +1,4 @@
-import { CartItem, Coupon } from '../../types';
+import { Coupon } from '../../types';
 import { ProductWithUI } from '../entities/product';
 import { ProductList } from '../features/product/shop/ui';
 import { useCart } from '../features/cart/hooks';
@@ -8,8 +8,6 @@ import { ShoppingSidebar } from '../widgets/ShoppingSidebar/ui';
 interface ShoppingPageProps {
   products: ProductWithUI[];
   searchTerm: string;
-  cart: CartItem[];
-  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   coupons: Coupon[];
   selectedCoupon: Coupon | null;
   setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
@@ -22,8 +20,6 @@ interface ShoppingPageProps {
 export default function ShoppingPage({
   products,
   searchTerm,
-  cart,
-  setCart,
   coupons,
   selectedCoupon,
   setSelectedCoupon,
@@ -31,11 +27,7 @@ export default function ShoppingPage({
 }: ShoppingPageProps) {
   const { filteredProducts } = useProductSearch(products, searchTerm);
 
-  const { addToCart } = useCart({
-    cart,
-    setCart,
-    products,
-  });
+  const { addToCart } = useCart({ products });
 
   return (
     <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
@@ -52,7 +44,6 @@ export default function ShoppingPage({
           <ProductList
             products={filteredProducts}
             searchTerm={searchTerm}
-            cart={cart}
             onAddToCart={addToCart}
           />
         </section>
@@ -61,8 +52,6 @@ export default function ShoppingPage({
       {/* ShoppingSidebar (widgets) */}
       <div className='lg:col-span-1'>
         <ShoppingSidebar
-          cart={cart}
-          setCart={setCart}
           coupons={coupons}
           selectedCoupon={selectedCoupon}
           setSelectedCoupon={setSelectedCoupon}

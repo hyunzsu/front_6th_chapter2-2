@@ -1,4 +1,4 @@
-import { CartItem, Coupon } from '../../../../types';
+import { Coupon } from '../../../../types';
 import { Button } from '../../../shared/ui';
 import { useOrder } from '../hooks';
 
@@ -7,19 +7,14 @@ interface OrderSummaryProps {
     totalBeforeDiscount: number;
     totalAfterDiscount: number;
   };
-  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
 }
 
 export function OrderSummary({
   totals,
-  setCart,
   setSelectedCoupon,
 }: OrderSummaryProps) {
-  const { completeOrder } = useOrder({
-    setCart,
-    setSelectedCoupon,
-  });
+  const { completeOrder } = useOrder({ setSelectedCoupon });
 
   return (
     <section className='bg-white rounded-lg border border-gray-200 p-4'>

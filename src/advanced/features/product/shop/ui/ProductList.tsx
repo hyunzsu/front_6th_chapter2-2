@@ -1,18 +1,15 @@
-import { CartItem } from '../../../../../types';
 import { ProductWithUI } from '../../../../entities/product';
 import ProductCard from './ProductCard';
 
 interface ProductListProps {
   products: ProductWithUI[];
   searchTerm: string;
-  cart: CartItem[];
   onAddToCart: (product: ProductWithUI) => void;
 }
 
 export default function ProductList({
   products,
   searchTerm,
-  cart,
   onAddToCart,
 }: ProductListProps) {
   if (products.length === 0) {
@@ -32,7 +29,6 @@ export default function ProductList({
           <ProductCard
             key={product.id}
             product={product}
-            cart={cart}
             onAddToCart={onAddToCart}
           />
         );

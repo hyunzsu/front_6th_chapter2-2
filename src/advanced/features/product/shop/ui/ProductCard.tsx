@@ -1,19 +1,20 @@
-import { CartItem } from '../../../../../types';
+import { useAtomValue } from 'jotai';
 import { ProductWithUI } from '../../../../entities/product';
 import { Button } from '../../../../shared/ui';
 import { formatPrice, getRemainingStock, getProductStockStatus } from '../../../../shared/utils';
+import { cartAtom } from '../../../../shared/store';
 
 interface ProductCardProps {
   product: ProductWithUI;
-  cart: CartItem[];
   onAddToCart: (product: ProductWithUI) => void;
 }
 
 export default function ProductCard({
   product,
-  cart,
   onAddToCart,
 }: ProductCardProps) {
+  const cart = useAtomValue(cartAtom);
+  
   // 장바구니에서 현재 상품 수량 찾기
   const cartQuantity = cart.find(item => item.product.id === product.id)?.quantity || 0;
   
