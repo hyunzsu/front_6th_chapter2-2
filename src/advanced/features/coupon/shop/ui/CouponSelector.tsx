@@ -3,25 +3,17 @@ import { useAtomValue, useAtom } from 'jotai';
 import { Coupon } from '../../../../../types';
 import { Button } from '../../../../shared/ui';
 import { useNotification } from '../../../../shared/utils';
-import { couponsAtom, selectedCouponAtom } from '../../../../shared/store';
+import { couponsAtom, selectedCouponAtom, cartTotalsAtom } from '../../../../shared/store';
 
-interface CouponSelectorProps {
-  calculateCartTotalWithCoupon: () => {
-    totalBeforeDiscount: number;
-    totalAfterDiscount: number;
-  };
-}
-
-export function CouponSelector({
-  calculateCartTotalWithCoupon,
-}: CouponSelectorProps) {
+export function CouponSelector() {
   const coupons = useAtomValue(couponsAtom);
   const [selectedCoupon, setSelectedCoupon] = useAtom(selectedCouponAtom);
+  const cartTotals = useAtomValue(cartTotalsAtom);
   const { addNotification } = useNotification();
 
   const applyCoupon = useCallback(
     (coupon: Coupon) => {
-      const currentTotal = calculateCartTotalWithCoupon().totalAfterDiscount;
+      const currentTotal = cartTotals.totalAfterDiscount;
 
       if (currentTotal < 10000 && coupon.discountType === 'percentage') {
         addNotification(
@@ -34,7 +26,7 @@ export function CouponSelector({
       setSelectedCoupon(coupon);
       addNotification('쿠폰이 적용되었습니다.', 'success');
     },
-    [addNotification, calculateCartTotalWithCoupon, setSelectedCoupon]
+    [addNotification, cartTotals.totalAfterDiscount, setSelectedCoupon]
   );
 
   return (
