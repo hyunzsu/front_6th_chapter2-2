@@ -1,12 +1,12 @@
+import { useAtomValue } from 'jotai';
 import { Coupon } from '../../types';
-import { ProductWithUI } from '../entities/product';
 import { ProductList } from '../features/product/shop/ui';
 import { useCart } from '../features/cart/hooks';
 import { useProductSearch } from '../features/product/shop/hooks';
 import { ShoppingSidebar } from '../widgets/ShoppingSidebar/ui';
+import { productsAtom } from '../shared/store';
 
 interface ShoppingPageProps {
-  products: ProductWithUI[];
   searchTerm: string;
   coupons: Coupon[];
   selectedCoupon: Coupon | null;
@@ -18,16 +18,16 @@ interface ShoppingPageProps {
 }
 
 export default function ShoppingPage({
-  products,
   searchTerm,
   coupons,
   selectedCoupon,
   setSelectedCoupon,
   calculateCartTotalWithCoupon,
 }: ShoppingPageProps) {
+  const products = useAtomValue(productsAtom);
   const { filteredProducts } = useProductSearch(products, searchTerm);
 
-  const { addToCart } = useCart({ products });
+  const { addToCart } = useCart();
 
   return (
     <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
@@ -55,7 +55,6 @@ export default function ShoppingPage({
           coupons={coupons}
           selectedCoupon={selectedCoupon}
           setSelectedCoupon={setSelectedCoupon}
-          products={products}
           calculateCartTotalWithCoupon={calculateCartTotalWithCoupon}
         />
       </div>

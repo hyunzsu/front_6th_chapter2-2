@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useAtomValue } from 'jotai';
 import { Coupon } from '../../../../types';
-import { ProductWithUI } from '../../../entities/product';
 import { useCart } from '../../../features/cart/hooks';
 import { calculateCartTotal } from '../../../entities/cart';
 import { CartItemsList } from '../../../features/cart/ui';
@@ -13,7 +12,6 @@ interface ShoppingSidebarProps {
   coupons: Coupon[];
   selectedCoupon: Coupon | null;
   setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
-  products: ProductWithUI[];
   calculateCartTotalWithCoupon: () => {
     totalBeforeDiscount: number;
     totalAfterDiscount: number;
@@ -24,11 +22,10 @@ export function ShoppingSidebar({
   coupons,
   selectedCoupon,
   setSelectedCoupon,
-  products,
   calculateCartTotalWithCoupon,
 }: ShoppingSidebarProps) {
   const cart = useAtomValue(cartAtom);
-  const { removeFromCart, updateQuantity } = useCart({ products });
+  const { removeFromCart, updateQuantity } = useCart();
 
   const totals = useMemo(() => {
     return calculateCartTotal(cart, selectedCoupon);

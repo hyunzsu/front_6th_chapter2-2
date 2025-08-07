@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useAtomValue } from 'jotai';
 import { Coupon } from '../types';
-import { initialProducts } from './entities/product';
 import { initialCoupons } from './entities/coupon';
 import { calculateCartTotal } from './entities/cart';
 import { useLocalStorage } from './shared/hooks';
@@ -12,7 +11,6 @@ import AdminPage from './pages/AdminPage';
 
 const App = () => {
   // localStorage와 연동된 데이터 상태들
-  const [products, setProducts] = useLocalStorage('products', initialProducts);
   const cart = useAtomValue(cartAtom);
   const [coupons, setCoupons] = useLocalStorage('coupons', initialCoupons);
 
@@ -45,14 +43,11 @@ const App = () => {
       <main className='max-w-7xl mx-auto px-4 py-8'>
         {isAdmin ? (
           <AdminPage
-            products={products}
-            setProducts={setProducts}
             coupons={coupons}
             setCoupons={setCoupons}
           />
         ) : (
           <ShoppingPage
-            products={products}
             searchTerm={searchTerm}
             coupons={coupons}
             selectedCoupon={selectedCoupon}

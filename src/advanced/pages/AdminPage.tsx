@@ -1,19 +1,14 @@
 import { useState } from 'react';
 import { Coupon } from '../../types';
-import { ProductWithUI } from '../entities/product';
 import { ProductManagement } from '../features/product/admin/ui';
 import { CouponManagement } from '../features/coupon/admin/ui';
 
 interface AdminPageProps {
-  products: ProductWithUI[];
-  setProducts: React.Dispatch<React.SetStateAction<ProductWithUI[]>>;
   coupons: Coupon[];
   setCoupons: React.Dispatch<React.SetStateAction<Coupon[]>>;
 }
 
 export default function AdminPage({
-  products,
-  setProducts,
   coupons,
   setCoupons,
 }: AdminPageProps) {
@@ -57,10 +52,7 @@ export default function AdminPage({
 
       {/* 탭 컨텐츠 */}
       {activeTab === 'products' ? (
-        <ProductManagement
-          products={products}
-          setProducts={setProducts}
-        />
+        <ProductManagement />
       ) : (
         <CouponManagement
           coupons={coupons}

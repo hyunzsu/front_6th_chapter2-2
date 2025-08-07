@@ -5,19 +5,10 @@ import { Button } from '../../../../shared/ui';
 import ProductTable from './ProductTable';
 import ProductForm from './ProductForm';
 
-interface ProductManagementProps {
-  products: ProductWithUI[];
-  setProducts: React.Dispatch<React.SetStateAction<ProductWithUI[]>>;
-}
+interface ProductManagementProps {}
 
-export default function ProductManagement({
-  products,
-  setProducts,
-}: ProductManagementProps) {
-  const { addProduct, updateProduct, deleteProduct } = useProducts({
-    products,
-    setProducts,
-  });
+export default function ProductManagement({}: ProductManagementProps) {
+  const { products, addProduct, updateProduct, deleteProduct } = useProducts();
 
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<string | null>(null);
