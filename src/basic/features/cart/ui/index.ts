@@ -1,1 +1,1 @@
-export { CartSidebar } from './CartSidebar';
+export { CartItemsList } from './CartItemsList';
