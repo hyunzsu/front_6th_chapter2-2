@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { CartItem, Coupon } from '../types';
 import { initialProducts } from './entities/product';
 import { initialCoupons } from './entities/coupon';
@@ -14,26 +14,14 @@ import ShoppingPage from './pages/ShoppingPage';
 import AdminPage from './pages/AdminPage';
 
 const App = () => {
-  // ============================================================================
-  // 상태 관리 - localStorage와 연동된 데이터 상태들
-  // ============================================================================
-
   // localStorage와 연동된 데이터 상태들
   const [products, setProducts] = useLocalStorage('products', initialProducts);
   const [cart, setCart] = useLocalStorage<CartItem[]>('cart', []);
   const [coupons, setCoupons] = useLocalStorage('coupons', initialCoupons);
 
-  // ============================================================================
-  // UI 상태 관리 - 화면 표시 및 사용자 인터랙션 관련 상태들
-  // ============================================================================
-
   // UI 상태 관리
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-
-  // ============================================================================
-  // 유틸리티 함수들 - 데이터 포맷팅 및 계산 로직
-  // ============================================================================
 
   // 가격 포맷팅 함수 (관리자/일반 사용자 구분, 품절 처리)
   const formatPrice = (price: number, productId?: string): string => {
@@ -95,17 +83,6 @@ const App = () => {
     addNotification,
   });
 
-  // ============================================================================
-  // 파생 상태 - 다른 상태로부터 계산되는 값들
-  // ============================================================================
-
-  const [totalItemCount, setTotalItemCount] = useState(0);
-
-  // 장바구니 아이템 수 업데이트
-  useEffect(() => {
-    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-    setTotalItemCount(count);
-  }, [cart]);
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -118,8 +95,7 @@ const App = () => {
       <Header
         isAdmin={isAdmin}
         searchTerm={searchTerm}
-        totalItemCount={totalItemCount}
-        cartLength={cart.length}
+        cart={cart}
         onToggleAdmin={() => setIsAdmin(!isAdmin)}
         onSearchChange={setSearchTerm}
       />

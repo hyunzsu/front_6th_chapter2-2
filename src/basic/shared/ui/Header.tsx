@@ -1,10 +1,10 @@
 import { SearchInput, Button } from '.';
+import { CartItem } from '../../../types';
 
 interface HeaderProps {
   isAdmin: boolean;
   searchTerm: string;
-  totalItemCount: number;
-  cartLength: number;
+  cart: CartItem[];
   onToggleAdmin: () => void;
   onSearchChange: (value: string) => void;
 }
@@ -12,11 +12,13 @@ interface HeaderProps {
 export default function Header({
   isAdmin,
   searchTerm,
-  totalItemCount,
-  cartLength,
+  cart,
   onToggleAdmin,
   onSearchChange,
 }: HeaderProps) {
+  const totalItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartLength = cart.length;
+
   return (
     <header className='bg-white shadow-sm sticky top-0 z-40 border-b'>
       <div className='max-w-7xl mx-auto px-4'>
