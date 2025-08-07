@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { CartItem, Coupon } from '../../types';
 import { ProductWithUI } from '../entities/product';
-import { ProductList } from '../features/products/list/ui';
+import { ProductList } from '../features/products/shop/ui';
 import { CartSidebar } from '../features/cart/ui';
 import { useCoupons } from '../features/coupons/hooks';
 import { useCart } from '../features/cart/hooks';
 import { useOrder } from '../features/order/hooks';
-import { useProductSearch } from '../features/products/list/hooks';
+import { useProductSearch } from '../features/products/shop/hooks';
 
 interface ShoppingPageProps {
   products: ProductWithUI[];
