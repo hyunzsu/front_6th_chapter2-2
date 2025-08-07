@@ -10,15 +10,14 @@ import { NotificationToast, SearchInput, Button } from './shared/ui';
 
 import { useProductSearch } from './features/products/list/hooks';
 import { useProducts } from './features/products/management/hooks';
-import { ProductManagement } from './features/products/management/ui';
 
 import { useCart } from './features/cart/hooks';
 
 import { useCoupons } from './features/coupons/hooks';
-import { CouponManagement } from './features/coupons/ui';
 
 import { useOrder } from './features/order/hooks';
 import ShoppingPage from './pages/ShoppingPage';
+import AdminPage from './pages/AdminPage';
 
 const App = () => {
   // ============================================================================
@@ -37,9 +36,6 @@ const App = () => {
   // UI 상태 관리
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<'products' | 'coupons'>(
-    'products'
-  );
 
   // ============================================================================
   // 유틸리티 함수들 - 데이터 포맷팅 및 계산 로직
@@ -73,7 +69,8 @@ const App = () => {
   const { notifications, addNotification, removeNotification } =
     useNotification();
 
-  const { searchTerm, setSearchTerm, filteredProducts } = useProductSearch(products);
+  const { searchTerm, setSearchTerm, filteredProducts } =
+    useProductSearch(products);
 
   const { addProduct, updateProduct, deleteProduct } = useProducts({
     products,
@@ -115,16 +112,6 @@ const App = () => {
     const count = cart.reduce((sum, item) => sum + item.quantity, 0);
     setTotalItemCount(count);
   }, [cart]);
-
-  // ============================================================================
-  // 계산된 값들 - 렌더링에 필요한 파생 데이터
-  // ============================================================================
-
-  const totals = calculateCartTotalWithCoupon();
-
-  // ============================================================================
-  // 거대한 JSX 렌더링 - ProductList, ProductManagement 컴포넌트로 교체
-  // ============================================================================
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -188,67 +175,18 @@ const App = () => {
       {/* 메인 컨텐츠 */}
       <main className='max-w-7xl mx-auto px-4 py-8'>
         {isAdmin ? (
-          // ============================================================================
-          // 관리자 페이지
-          // ============================================================================
-          <div className='max-w-6xl mx-auto'>
-            <div className='mb-8'>
-              <h1 className='text-2xl font-bold text-gray-900'>
-                관리자 대시보드
-              </h1>
-              <p className='text-gray-600 mt-1'>
-                상품과 쿠폰을 관리할 수 있습니다
-              </p>
-            </div>
-
-            {/* 탭 네비게이션 */}
-            <div className='border-b border-gray-200 mb-6'>
-              <nav className='-mb-px flex space-x-8'>
-                <button
-                  onClick={() => setActiveTab('products')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === 'products'
-                      ? 'border-gray-900 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  상품 관리
-                </button>
-                <button
-                  onClick={() => setActiveTab('coupons')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === 'coupons'
-                      ? 'border-gray-900 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  쿠폰 관리
-                </button>
-              </nav>
-            </div>
-
-            {activeTab === 'products' ? (
-              <ProductManagement
-                products={products}
-                onAddProduct={addProduct}
-                onUpdateProduct={updateProduct}
-                onDeleteProduct={deleteProduct}
-                formatPrice={formatPrice}
-                addNotification={addNotification}
-              />
-            ) : (
-              <CouponManagement
-                coupons={coupons}
-                onAddCoupon={addCoupon}
-                onDeleteCoupon={deleteCoupon}
-                addNotification={addNotification}
-              />
-            )}
-          </div>
+          <AdminPage
+            products={products}
+            onAddProduct={addProduct}
+            onUpdateProduct={updateProduct}
+            onDeleteProduct={deleteProduct}
+            coupons={coupons}
+            onAddCoupon={addCoupon}
+            onDeleteCoupon={deleteCoupon}
+            formatPrice={formatPrice}
+            addNotification={addNotification}
+          />
         ) : (
-          // ============================================================================
-          // 쇼핑몰 메인 페이지
-          // ============================================================================
           <ShoppingPage
             products={products}
             filteredProducts={filteredProducts}
