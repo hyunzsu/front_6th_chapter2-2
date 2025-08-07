@@ -8,21 +8,15 @@ import ProductForm from './ProductForm';
 interface ProductManagementProps {
   products: ProductWithUI[];
   setProducts: React.Dispatch<React.SetStateAction<ProductWithUI[]>>;
-  addNotification: (
-    message: string,
-    type?: 'error' | 'success' | 'warning'
-  ) => void;
 }
 
 export default function ProductManagement({
   products,
   setProducts,
-  addNotification,
 }: ProductManagementProps) {
   const { addProduct, updateProduct, deleteProduct } = useProducts({
     products,
     setProducts,
-    addNotification,
   });
 
   const [showProductForm, setShowProductForm] = useState(false);
@@ -105,7 +99,6 @@ export default function ProductManagement({
           onSubmit={handleProductSubmit}
           onCancel={resetForm}
           isEditing={editingProduct !== 'new'}
-          addNotification={addNotification}
         />
       )}
     </section>

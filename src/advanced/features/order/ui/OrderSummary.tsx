@@ -9,22 +9,16 @@ interface OrderSummaryProps {
   };
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
-  addNotification: (
-    message: string,
-    type?: 'error' | 'success' | 'warning'
-  ) => void;
 }
 
 export function OrderSummary({
   totals,
   setCart,
   setSelectedCoupon,
-  addNotification,
 }: OrderSummaryProps) {
   const { completeOrder } = useOrder({
     setCart,
     setSelectedCoupon,
-    addNotification,
   });
 
   return (

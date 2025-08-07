@@ -1,15 +1,12 @@
+import { useCallback } from 'react';
 import { Coupon } from '../../../../../types';
 import { Button } from '../../../../shared/ui';
-import { useCoupons } from '../../../../entities/coupon/hooks';
+import { useNotification } from '../../../../shared/utils';
 
 interface CouponSelectorProps {
   coupons: Coupon[];
   selectedCoupon: Coupon | null;
   setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
-  addNotification: (
-    message: string,
-    type?: 'error' | 'success' | 'warning'
-  ) => void;
   calculateCartTotalWithCoupon: () => {
     totalBeforeDiscount: number;
     totalAfterDiscount: number;
@@ -20,17 +17,27 @@ export function CouponSelector({
   coupons,
   selectedCoupon,
   setSelectedCoupon,
-  addNotification,
   calculateCartTotalWithCoupon,
 }: CouponSelectorProps) {
-  const { applyCoupon } = useCoupons({
-    coupons,
-    setCoupons: () => {},
-    selectedCoupon,
-    setSelectedCoupon,
-    addNotification,
-    calculateCartTotalWithCoupon,
-  });
+  const { addNotification } = useNotification();
+
+  const applyCoupon = useCallback(
+    (coupon: Coupon) => {
+      const currentTotal = calculateCartTotalWithCoupon().totalAfterDiscount;
+
+      if (currentTotal < 10000 && coupon.discountType === 'percentage') {
+        addNotification(
+          'percentage 쿠폰은 10,000원 이상 구매 시 사용 가능합니다.',
+          'error'
+        );
+        return;
+      }
+
+      setSelectedCoupon(coupon);
+      addNotification('쿠폰이 적용되었습니다.', 'success');
+    },
+    [addNotification, calculateCartTotalWithCoupon, setSelectedCoupon]
+  );
 
   return (
     <section className='bg-white rounded-lg border border-gray-200 p-4'>

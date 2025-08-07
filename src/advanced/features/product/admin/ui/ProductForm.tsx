@@ -1,5 +1,6 @@
 import { FormEvent } from 'react';
 import { Button } from '../../../../shared/ui';
+import { useNotification } from '../../../../shared/utils';
 
 interface ProductFormData {
   name: string;
@@ -15,10 +16,6 @@ interface ProductFormProps {
   onSubmit: () => void;
   onCancel: () => void;
   isEditing: boolean;
-  addNotification: (
-    message: string,
-    type?: 'error' | 'success' | 'warning'
-  ) => void;
 }
 
 export default function ProductForm({
@@ -27,8 +24,9 @@ export default function ProductForm({
   onSubmit,
   onCancel,
   isEditing,
-  addNotification,
 }: ProductFormProps) {
+  const { addNotification } = useNotification();
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSubmit();

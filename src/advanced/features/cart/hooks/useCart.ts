@@ -1,24 +1,17 @@
 import { useCallback } from 'react';
 import { CartItem } from '../../../../types';
 import { ProductWithUI } from '../../../entities/product';
-import { getRemainingStock } from '../../../shared/utils';
+import { getRemainingStock, useNotification } from '../../../shared/utils';
 
 interface UseCartProps {
   cart: CartItem[];
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   products: ProductWithUI[];
-  addNotification: (
-    message: string,
-    type?: 'error' | 'success' | 'warning'
-  ) => void;
 }
 
-export function useCart({
-  cart,
-  setCart,
-  products,
-  addNotification,
-}: UseCartProps) {
+export function useCart({ cart, setCart, products }: UseCartProps) {
+  const { addNotification } = useNotification();
+
   // 특정 상품의 장바구니 수량 찾기
   const getCartQuantity = useCallback(
     (productId: string): number => {
@@ -32,11 +25,11 @@ export function useCart({
   const addToCart = useCallback(
     (product: ProductWithUI) => {
       const cartQuantity = getCartQuantity(product.id);
-      const remainingStock = getRemainingStock({ 
-        stock: product.stock, 
-        cartQuantity 
+      const remainingStock = getRemainingStock({
+        stock: product.stock,
+        cartQuantity,
       });
-      
+
       if (remainingStock <= 0) {
         addNotification('재고가 부족합니다!', 'error');
         return;

@@ -1,14 +1,12 @@
-import { Notification } from '../hooks/useNotification';
+import { useAtom } from 'jotai';
+import { notificationsAtom } from '../store';
 
-interface NotificationToastProps {
-  notifications: Notification[];
-  onRemove: (id: string) => void;
-}
-
-export default function NotificationToast({
-  notifications,
-  onRemove,
-}: NotificationToastProps) {
+export default function NotificationToast() {
+  const [notifications, setNotifications] = useAtom(notificationsAtom);
+  
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
   if (notifications.length === 0) return null;
 
   return (
@@ -26,7 +24,7 @@ export default function NotificationToast({
         >
           <span className='mr-2'>{notif.message}</span>
           <button
-            onClick={() => onRemove(notif.id)}
+            onClick={() => removeNotification(notif.id)}
             className='text-white hover:text-gray-200'
             aria-label='알림 닫기'
           >

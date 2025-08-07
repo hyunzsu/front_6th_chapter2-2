@@ -14,10 +14,6 @@ interface ShoppingSidebarProps {
   selectedCoupon: Coupon | null;
   setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
   products: ProductWithUI[];
-  addNotification: (
-    message: string,
-    type?: 'error' | 'success' | 'warning'
-  ) => void;
   calculateCartTotalWithCoupon: () => {
     totalBeforeDiscount: number;
     totalAfterDiscount: number;
@@ -31,14 +27,12 @@ export function ShoppingSidebar({
   selectedCoupon,
   setSelectedCoupon,
   products,
-  addNotification,
   calculateCartTotalWithCoupon,
 }: ShoppingSidebarProps) {
   const { removeFromCart, updateQuantity } = useCart({
     cart,
     setCart,
     products,
-    addNotification,
   });
 
   const totals = useMemo(() => {
@@ -60,14 +54,12 @@ export function ShoppingSidebar({
             coupons={coupons}
             selectedCoupon={selectedCoupon}
             setSelectedCoupon={setSelectedCoupon}
-            addNotification={addNotification}
             calculateCartTotalWithCoupon={calculateCartTotalWithCoupon}
           />
           <OrderSummary
             totals={totals}
             setCart={setCart}
             setSelectedCoupon={setSelectedCoupon}
-            addNotification={addNotification}
           />
         </>
       )}

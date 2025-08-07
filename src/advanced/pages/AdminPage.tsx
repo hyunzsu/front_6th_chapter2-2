@@ -9,10 +9,6 @@ interface AdminPageProps {
   setProducts: React.Dispatch<React.SetStateAction<ProductWithUI[]>>;
   coupons: Coupon[];
   setCoupons: React.Dispatch<React.SetStateAction<Coupon[]>>;
-  addNotification: (
-    message: string,
-    type?: 'error' | 'success' | 'warning'
-  ) => void;
 }
 
 export default function AdminPage({
@@ -20,7 +16,6 @@ export default function AdminPage({
   setProducts,
   coupons,
   setCoupons,
-  addNotification,
 }: AdminPageProps) {
   const [activeTab, setActiveTab] = useState<'products' | 'coupons'>(
     'products'
@@ -65,13 +60,11 @@ export default function AdminPage({
         <ProductManagement
           products={products}
           setProducts={setProducts}
-          addNotification={addNotification}
         />
       ) : (
         <CouponManagement
           coupons={coupons}
           setCoupons={setCoupons}
-          addNotification={addNotification}
         />
       )}
     </div>

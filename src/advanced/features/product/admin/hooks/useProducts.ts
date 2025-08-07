@@ -1,20 +1,17 @@
 import { useCallback } from 'react';
+import { useNotification } from '../../../../shared/utils';
 import { ProductWithUI } from '../../../../entities/product';
 
 interface UseProductsProps {
   products: ProductWithUI[];
   setProducts: React.Dispatch<React.SetStateAction<ProductWithUI[]>>;
-  addNotification: (
-    message: string,
-    type?: 'error' | 'success' | 'warning'
-  ) => void;
 }
 
 export function useProducts({
   products,
   setProducts,
-  addNotification,
 }: UseProductsProps) {
+  const { addNotification } = useNotification();
   // 상품 추가
   const addProduct = useCallback(
     (newProduct: Omit<ProductWithUI, 'id'>) => {

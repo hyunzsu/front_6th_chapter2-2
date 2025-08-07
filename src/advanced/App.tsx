@@ -3,7 +3,7 @@ import { CartItem, Coupon } from '../types';
 import { initialProducts } from './entities/product';
 import { initialCoupons } from './entities/coupon';
 import { calculateCartTotal } from './entities/cart';
-import { useLocalStorage, useNotification } from './shared/hooks';
+import { useLocalStorage } from './shared/hooks';
 import { NotificationToast, Header } from './shared/ui';
 import ShoppingPage from './pages/ShoppingPage';
 import AdminPage from './pages/AdminPage';
@@ -19,9 +19,6 @@ const App = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // 알림 시스템
-  const { notifications, addNotification, removeNotification } =
-    useNotification();
 
   // 장바구니 전체 금액 계산 (쿠폰 할인 포함) - entities/cart 함수 사용
   const calculateCartTotalWithCoupon = useCallback((): {
@@ -34,10 +31,7 @@ const App = () => {
   return (
     <div className='min-h-screen bg-gray-50'>
       {/* 알림 시스템 */}
-      <NotificationToast
-        notifications={notifications}
-        onRemove={removeNotification}
-      />
+      <NotificationToast />
       {/* 헤더 */}
       <Header
         isAdmin={isAdmin}
@@ -54,7 +48,6 @@ const App = () => {
             setProducts={setProducts}
             coupons={coupons}
             setCoupons={setCoupons}
-            addNotification={addNotification}
           />
         ) : (
           <ShoppingPage
@@ -65,7 +58,6 @@ const App = () => {
             coupons={coupons}
             selectedCoupon={selectedCoupon}
             setSelectedCoupon={setSelectedCoupon}
-            addNotification={addNotification}
             calculateCartTotalWithCoupon={calculateCartTotalWithCoupon}
           />
         )}

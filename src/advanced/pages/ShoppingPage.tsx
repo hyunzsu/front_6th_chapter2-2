@@ -13,10 +13,6 @@ interface ShoppingPageProps {
   coupons: Coupon[];
   selectedCoupon: Coupon | null;
   setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
-  addNotification: (
-    message: string,
-    type?: 'error' | 'success' | 'warning'
-  ) => void;
   calculateCartTotalWithCoupon: () => {
     totalBeforeDiscount: number;
     totalAfterDiscount: number;
@@ -31,7 +27,6 @@ export default function ShoppingPage({
   coupons,
   selectedCoupon,
   setSelectedCoupon,
-  addNotification,
   calculateCartTotalWithCoupon,
 }: ShoppingPageProps) {
   const { filteredProducts } = useProductSearch(products, searchTerm);
@@ -40,7 +35,6 @@ export default function ShoppingPage({
     cart,
     setCart,
     products,
-    addNotification,
   });
 
   return (
@@ -73,7 +67,6 @@ export default function ShoppingPage({
           selectedCoupon={selectedCoupon}
           setSelectedCoupon={setSelectedCoupon}
           products={products}
-          addNotification={addNotification}
           calculateCartTotalWithCoupon={calculateCartTotalWithCoupon}
         />
       </div>

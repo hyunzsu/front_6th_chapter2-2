@@ -1,5 +1,6 @@
 import { FormEvent } from 'react';
 import { Button } from '../../../../shared/ui';
+import { useNotification } from '../../../../shared/utils';
 
 interface CouponFormData {
   name: string;
@@ -13,10 +14,6 @@ interface CouponFormProps {
   setCouponForm: React.Dispatch<React.SetStateAction<CouponFormData>>;
   onSubmit: () => void;
   onCancel: () => void;
-  addNotification: (
-    message: string,
-    type?: 'error' | 'success' | 'warning'
-  ) => void;
 }
 
 export default function CouponForm({
@@ -24,8 +21,9 @@ export default function CouponForm({
   setCouponForm,
   onSubmit,
   onCancel,
-  addNotification,
 }: CouponFormProps) {
+  const { addNotification } = useNotification();
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSubmit();
