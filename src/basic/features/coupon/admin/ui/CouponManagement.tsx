@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Coupon } from '../../../../types';
-import { useCoupons } from '../hooks';
-import CouponForm from './CouponForm';
+import { Coupon } from '../../../../../types';
+import { useCoupons } from '../../../../entities/coupon/hooks';
 import CouponTable from './CouponTable';
+import CouponForm from './CouponForm';
 
 interface CouponManagementProps {
   coupons: Coupon[];

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Coupon } from '../../types';
 import { ProductWithUI } from '../entities/product';
-import { ProductManagement } from '../features/products/admin/ui';
-import { CouponManagement } from '../features/coupons/ui';
+import { ProductManagement } from '../features/product/admin/ui';
+import { CouponManagement } from '../features/coupon/admin/ui';
 
 interface AdminPageProps {
   products: ProductWithUI[];

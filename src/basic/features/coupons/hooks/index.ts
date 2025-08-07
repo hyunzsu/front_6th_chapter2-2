@@ -1,1 +1,0 @@
-export { useCoupons } from './useCoupons';

@@ -1,5 +1,5 @@
 import { FormEvent } from 'react';
-import { Button } from '../../../shared/ui';
+import { Button } from '../../../../shared/ui';
 
 interface CouponFormData {
   name: string;

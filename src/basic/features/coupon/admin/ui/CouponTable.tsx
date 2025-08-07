@@ -1,5 +1,5 @@
-import { Coupon } from '../../../../types';
-import { Button } from '../../../shared/ui';
+import { Coupon } from '../../../../../types';
+import { Button } from '../../../../shared/ui';
 
 interface CouponTableProps {
   coupons: Coupon[];
