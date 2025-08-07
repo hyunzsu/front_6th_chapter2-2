@@ -1,4 +1,3 @@
-import { Coupon } from '../../../../types';
 import { Button } from '../../../shared/ui';
 import { useOrder } from '../hooks';
 
@@ -7,14 +6,12 @@ interface OrderSummaryProps {
     totalBeforeDiscount: number;
     totalAfterDiscount: number;
   };
-  setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
 }
 
 export function OrderSummary({
   totals,
-  setSelectedCoupon,
 }: OrderSummaryProps) {
-  const { completeOrder } = useOrder({ setSelectedCoupon });
+  const { completeOrder } = useOrder();
 
   return (
     <section className='bg-white rounded-lg border border-gray-200 p-4'>

@@ -1,17 +1,13 @@
 import { useMemo } from 'react';
 import { useAtomValue } from 'jotai';
-import { Coupon } from '../../../../types';
 import { useCart } from '../../../features/cart/hooks';
 import { calculateCartTotal } from '../../../entities/cart';
 import { CartItemsList } from '../../../features/cart/ui';
 import { CouponSelector } from '../../../features/coupon/shop/ui';
 import { OrderSummary } from '../../../features/order/ui';
-import { cartAtom } from '../../../shared/store';
+import { cartAtom, selectedCouponAtom } from '../../../shared/store';
 
 interface ShoppingSidebarProps {
-  coupons: Coupon[];
-  selectedCoupon: Coupon | null;
-  setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
   calculateCartTotalWithCoupon: () => {
     totalBeforeDiscount: number;
     totalAfterDiscount: number;
@@ -19,12 +15,10 @@ interface ShoppingSidebarProps {
 }
 
 export function ShoppingSidebar({
-  coupons,
-  selectedCoupon,
-  setSelectedCoupon,
   calculateCartTotalWithCoupon,
 }: ShoppingSidebarProps) {
   const cart = useAtomValue(cartAtom);
+  const selectedCoupon = useAtomValue(selectedCouponAtom);
   const { removeFromCart, updateQuantity } = useCart();
 
   const totals = useMemo(() => {
@@ -43,14 +37,10 @@ export function ShoppingSidebar({
       {cart.length > 0 && (
         <>
           <CouponSelector
-            coupons={coupons}
-            selectedCoupon={selectedCoupon}
-            setSelectedCoupon={setSelectedCoupon}
             calculateCartTotalWithCoupon={calculateCartTotalWithCoupon}
           />
           <OrderSummary
             totals={totals}
-            setSelectedCoupon={setSelectedCoupon}
           />
         </>
       )}

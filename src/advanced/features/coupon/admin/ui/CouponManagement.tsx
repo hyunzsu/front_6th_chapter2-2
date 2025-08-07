@@ -1,18 +1,13 @@
 import { useState, useCallback } from 'react';
+import { useAtom } from 'jotai';
 import { Coupon } from '../../../../../types';
 import CouponTable from './CouponTable';
 import CouponForm from './CouponForm';
 import { useNotification } from '../../../../shared/utils';
+import { couponsAtom } from '../../../../shared/store';
 
-interface CouponManagementProps {
-  coupons: Coupon[];
-  setCoupons: React.Dispatch<React.SetStateAction<Coupon[]>>;
-}
-
-export function CouponManagement({
-  coupons,
-  setCoupons,
-}: CouponManagementProps) {
+export default function CouponManagement() {
+  const [coupons, setCoupons] = useAtom(couponsAtom);
   const { addNotification } = useNotification();
 
   const addCoupon = useCallback(

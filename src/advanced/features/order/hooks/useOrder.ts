@@ -1,16 +1,12 @@
 import { useCallback } from 'react';
 import { useSetAtom } from 'jotai';
-import { Coupon } from '../../../../types';
 import { useNotification } from '../../../shared/utils';
-import { cartAtom } from '../../../shared/store';
+import { cartAtom, selectedCouponAtom } from '../../../shared/store';
 
-interface UseOrderProps {
-  setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
-}
-
-export function useOrder({ setSelectedCoupon }: UseOrderProps) {
+export function useOrder() {
   const { addNotification } = useNotification();
   const setCart = useSetAtom(cartAtom);
+  const setSelectedCoupon = useSetAtom(selectedCouponAtom);
 
   // 주문 완료 처리
   const completeOrder = useCallback(() => {

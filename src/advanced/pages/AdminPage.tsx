@@ -1,17 +1,8 @@
 import { useState } from 'react';
-import { Coupon } from '../../types';
 import { ProductManagement } from '../features/product/admin/ui';
 import { CouponManagement } from '../features/coupon/admin/ui';
 
-interface AdminPageProps {
-  coupons: Coupon[];
-  setCoupons: React.Dispatch<React.SetStateAction<Coupon[]>>;
-}
-
-export default function AdminPage({
-  coupons,
-  setCoupons,
-}: AdminPageProps) {
+export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'products' | 'coupons'>(
     'products'
   );
@@ -54,10 +45,7 @@ export default function AdminPage({
       {activeTab === 'products' ? (
         <ProductManagement />
       ) : (
-        <CouponManagement
-          coupons={coupons}
-          setCoupons={setCoupons}
-        />
+        <CouponManagement />
       )}
     </div>
   );

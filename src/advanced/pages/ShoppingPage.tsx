@@ -1,5 +1,4 @@
 import { useAtomValue } from 'jotai';
-import { Coupon } from '../../types';
 import { ProductList } from '../features/product/shop/ui';
 import { useCart } from '../features/cart/hooks';
 import { useProductSearch } from '../features/product/shop/hooks';
@@ -8,9 +7,6 @@ import { productsAtom } from '../shared/store';
 
 interface ShoppingPageProps {
   searchTerm: string;
-  coupons: Coupon[];
-  selectedCoupon: Coupon | null;
-  setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
   calculateCartTotalWithCoupon: () => {
     totalBeforeDiscount: number;
     totalAfterDiscount: number;
@@ -19,9 +15,6 @@ interface ShoppingPageProps {
 
 export default function ShoppingPage({
   searchTerm,
-  coupons,
-  selectedCoupon,
-  setSelectedCoupon,
   calculateCartTotalWithCoupon,
 }: ShoppingPageProps) {
   const products = useAtomValue(productsAtom);
@@ -52,9 +45,6 @@ export default function ShoppingPage({
       {/* ShoppingSidebar (widgets) */}
       <div className='lg:col-span-1'>
         <ShoppingSidebar
-          coupons={coupons}
-          selectedCoupon={selectedCoupon}
-          setSelectedCoupon={setSelectedCoupon}
           calculateCartTotalWithCoupon={calculateCartTotalWithCoupon}
         />
       </div>

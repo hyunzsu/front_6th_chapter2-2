@@ -1,12 +1,11 @@
 import { useCallback } from 'react';
+import { useAtomValue, useAtom } from 'jotai';
 import { Coupon } from '../../../../../types';
 import { Button } from '../../../../shared/ui';
 import { useNotification } from '../../../../shared/utils';
+import { couponsAtom, selectedCouponAtom } from '../../../../shared/store';
 
 interface CouponSelectorProps {
-  coupons: Coupon[];
-  selectedCoupon: Coupon | null;
-  setSelectedCoupon: React.Dispatch<React.SetStateAction<Coupon | null>>;
   calculateCartTotalWithCoupon: () => {
     totalBeforeDiscount: number;
     totalAfterDiscount: number;
@@ -14,11 +13,10 @@ interface CouponSelectorProps {
 }
 
 export function CouponSelector({
-  coupons,
-  selectedCoupon,
-  setSelectedCoupon,
   calculateCartTotalWithCoupon,
 }: CouponSelectorProps) {
+  const coupons = useAtomValue(couponsAtom);
+  const [selectedCoupon, setSelectedCoupon] = useAtom(selectedCouponAtom);
   const { addNotification } = useNotification();
 
   const applyCoupon = useCallback(

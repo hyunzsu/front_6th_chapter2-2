@@ -5,9 +5,7 @@ import { Button } from '../../../../shared/ui';
 import ProductTable from './ProductTable';
 import ProductForm from './ProductForm';
 
-interface ProductManagementProps {}
-
-export default function ProductManagement({}: ProductManagementProps) {
+export default function ProductManagement() {
   const { products, addProduct, updateProduct, deleteProduct } = useProducts();
 
   const [showProductForm, setShowProductForm] = useState(false);
